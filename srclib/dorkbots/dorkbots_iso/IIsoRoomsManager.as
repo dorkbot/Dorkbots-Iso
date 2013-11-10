@@ -1,4 +1,4 @@
-package com.dayvid.iso
+package dorkbots.dorkbots_iso
 {
 	public interface IIsoRoomsManager
 	{

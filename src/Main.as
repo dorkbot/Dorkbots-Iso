@@ -1,10 +1,10 @@
 package
 {
-	import com.dayvid.iso.IIsoMaker;
-	import com.dayvid.iso.IIsoRoomsManager;
-	import com.dayvid.iso.IsoEvents;
-	import com.dayvid.iso.IsoMaker;
-	import com.dayvid.iso.IsoRoomsManager;
+	import dorkbots.dorkbots_iso.IIsoMaker;
+	import dorkbots.dorkbots_iso.IIsoRoomsManager;
+	import dorkbots.dorkbots_iso.IsoEvents;
+	import dorkbots.dorkbots_iso.IsoMaker;
+	import dorkbots.dorkbots_iso.IsoRoomsManager;
 	
 	import flash.display.Sprite;
 	import flash.events.Event;

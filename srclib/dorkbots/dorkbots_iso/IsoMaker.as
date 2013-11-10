@@ -1,4 +1,4 @@
-package com.dayvid.iso
+package dorkbots.dorkbots_iso
 {
 	import com.csharks.juwalbose.IsoHelper;
 	import com.dayvid.util.RemoveDisplayObjects;
@@ -521,27 +521,21 @@ package com.dayvid.iso
 					return;
 				}
 				
-				var run:Boolean = true;
-				if (run)
-				{
-					//place the hero at tile middle before turn
-					var pos:Point = new Point();
-					pos.x = heroNode.x * roomData.nodeWidth + (roomData.nodeWidth / 2) + cornerPoint.x;
-					pos.y = heroNode.y * roomData.nodeWidth + (roomData.nodeWidth / 2) + cornerPoint.y;
-					
-					pos = IsoHelper.twoDToIso(pos);
-					
-					roomData.hero.x = borderOffsetX + pos.x;
-					roomData.hero.y = borderOffsetY + pos.y;
-					
-					heroCartPos.x = heroNode.x * roomData.nodeWidth + roomData.nodeWidth / 2;
-					heroCartPos.y = heroNode.y * roomData.nodeWidth + roomData.nodeWidth / 2;
-					
-					/*heroPointer.x = heroCartPos.x;
-					heroPointer.y = heroCartPos.y;
-					depthSort();*/
-				}
+				//place the hero at tile middle before turn
+				var pos:Point = new Point();
+				pos.x = heroNode.x * roomData.nodeWidth + (roomData.nodeWidth / 2) + cornerPoint.x;
+				pos.y = heroNode.y * roomData.nodeWidth + (roomData.nodeWidth / 2) + cornerPoint.y;
 				
+				pos = IsoHelper.twoDToIso(pos);
+				
+				roomData.hero.x = borderOffsetX + pos.x;
+				roomData.hero.y = borderOffsetY + pos.y;
+				
+				heroCartPos.x = heroNode.x * roomData.nodeWidth + roomData.nodeWidth / 2;
+				heroCartPos.y = heroNode.y * roomData.nodeWidth + roomData.nodeWidth / 2;
+				
+				// TO DO
+				// update Map
 				
 				//new point, turn, find dX,dY
 				stepsTaken = 0;
@@ -590,13 +584,13 @@ package com.dayvid.iso
 					else if (dY == 1)
 					{
 						heroFacing = "southeast";
-						dX = dY = 0.5;
+						dX = dY = 0.75;
 					}
 					else
 					{
 						heroFacing = "northeast";
-						dX = 0.5;
-						dY = -0.5;
+						dX = 0.75;
+						dY = -0.75;
 					}
 				}
 				else if (dX == -1)
@@ -608,13 +602,13 @@ package com.dayvid.iso
 					else if (dY == 1)
 					{
 						heroFacing = "southwest";
-						dY = 0.5;
-						dX = -0.5;
+						dY = 0.75;
+						dX = -0.75;
 					}
 					else
 					{
 						heroFacing= "northwest";
-						dX = dY = -0.5;
+						dX = dY = -0.75;
 					}
 				}
 				else

@@ -1,6 +1,6 @@
 package rooms
 {
-	import com.dayvid.iso.IIsoRoomData;
+	import dorkbots.dorkbots_iso.IIsoRoomData;
 	
 	public class Room3Data extends AbstractRoomData implements IIsoRoomData
 	{
