@@ -1,4 +1,4 @@
-package dorkbots.dorkbots_iso
+package dorkbots.dorkbots_iso.room
 {
 	public class IsoRoomsManager implements IIsoRoomsManager
 	{

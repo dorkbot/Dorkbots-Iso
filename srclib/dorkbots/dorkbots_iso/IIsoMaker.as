@@ -7,7 +7,7 @@ package dorkbots.dorkbots_iso
 	public interface IIsoMaker extends IBroadcastingObject
 	{
 		function get canvas():Bitmap;
-		function createLevel():void;
+		function start():void;
 		function loop():void;
 	}
 }

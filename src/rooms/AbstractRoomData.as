@@ -1,7 +1,7 @@
 package rooms
 {
-	import dorkbots.dorkbots_iso.IIsoRoomData;
-	import dorkbots.dorkbots_iso.IsoRoomData;
+	import dorkbots.dorkbots_iso.room.IIsoRoomData;
+	import dorkbots.dorkbots_iso.room.IsoRoomData;
 	
 	public class AbstractRoomData extends IsoRoomData implements IIsoRoomData
 	{

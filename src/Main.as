@@ -1,10 +1,10 @@
 package
 {
 	import dorkbots.dorkbots_iso.IIsoMaker;
-	import dorkbots.dorkbots_iso.IIsoRoomsManager;
+	import dorkbots.dorkbots_iso.room.IIsoRoomsManager;
 	import dorkbots.dorkbots_iso.IsoEvents;
 	import dorkbots.dorkbots_iso.IsoMaker;
-	import dorkbots.dorkbots_iso.IsoRoomsManager;
+	import dorkbots.dorkbots_iso.room.IsoRoomsManager;
 	
 	import flash.display.Sprite;
 	import flash.events.Event;
@@ -35,7 +35,7 @@ package
 			isoMaker = new IsoMaker( isoContainer, roomsManager );
 			isoMaker.addEventListener( IsoEvents.ROOM_CHANGE, roomChange );
 			isoMaker.addEventListener( IsoEvents.PICKUP_COLLECTED, pickupCollected );
-			isoMaker.createLevel();
+			isoMaker.start();
 			
 			addEventListener(Event.ENTER_FRAME, loop);
 		}

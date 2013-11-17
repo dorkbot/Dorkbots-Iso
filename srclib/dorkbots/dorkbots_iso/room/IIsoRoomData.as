@@ -1,4 +1,4 @@
-package dorkbots.dorkbots_iso
+package dorkbots.dorkbots_iso.room
 {
 	import flash.display.MovieClip;
 
@@ -10,15 +10,15 @@ package dorkbots.dorkbots_iso
 		function get speed():uint;
 		function get terrainTile():MovieClip;
 		function get pickupTile():MovieClip;
-		function get heroHalfSize():uint;
+		function get entityHalfSize():uint;
 		function get hero():MovieClip;
 		function get borderOffsetX():uint;
 		function get borderOffsetY():uint;
 		function get nodeWidth():uint;
 		function get viewHeight():Number;
 		function get viewWidth():Number;
-		function get roomNodeHeight():uint;
-		function get roomNodeWidth():uint;
+		function get roomNodeGridHeight():uint;
+		function get roomNodeGridWidth():uint;
 		function init():void;
 		function get roomWalkable():Array;
 		function get roomTerrain():Array;

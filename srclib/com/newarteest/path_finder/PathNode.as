@@ -1,2 +1,2 @@
 ﻿//used by PathFinderpackage com.newarteest.path_finder
-{		public class PathNode {		public var x;		public var y;		public var g;		public var h;		public var parentNode:PathNode;			//Constructor		public function PathNode(xPos, yPos, gVal, hVal, link) {			x = xPos;			y = yPos;			g = gVal;			h = hVal;			parentNode = link;		}		//end of class	}}
+{		public class PathNode {		public var x:Number;		public var y:Number;		public var g:Number;		public var h:Number;		public var parentNode:PathNode;			//Constructor		public function PathNode(xPos:Number, yPos:Number, gVal:Number, hVal:Number, link:PathNode) {			x = xPos;			y = yPos;			g = gVal;			h = hVal;			parentNode = link;		}		//end of class	}}

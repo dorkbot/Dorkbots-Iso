@@ -1,7 +1,6 @@
 package dorkbots.dorkbots_iso
 {
 	import com.csharks.juwalbose.IsoHelper;
-	import com.dayvid.util.RemoveDisplayObjects;
 	import com.newarteest.path_finder.PathFinder;
 	import com.senocular.utils.KeyObject;
 	
@@ -16,12 +15,14 @@ package dorkbots.dorkbots_iso
 	import flash.ui.Keyboard;
 	
 	import dorkbots.dorkbots_broadcasters.BroadcastingObject;
+	import dorkbots.dorkbots_iso.entity.IHero;
+	import dorkbots.dorkbots_iso.room.IIsoRoomData;
+	import dorkbots.dorkbots_iso.room.IIsoRoomsManager;
+	import dorkbots.dorkbots_util.RemoveDisplayObjects;
+	import dorkbots.dorkbots_iso.entity.Hero;
 
 	public class IsoMaker extends BroadcastingObject implements IIsoMaker
 	{		
-		private var heroCartPos:Point = new Point();
-		private var heroNode:Point = new Point();
-		
 		//the canvas
 		private var _canvas:Bitmap;
 		private var rect:Rectangle;
@@ -34,25 +35,14 @@ package dorkbots.dorkbots_iso
 		//Senocular KeyObject Class
 		private var key:KeyObject;
 		
-		//to handle direction movement
-		private var dX:Number = 0;
-		private var dY:Number = 0;
-		private var idle:Boolean = true;
-		private var heroFacing:String;
-		private var currentHeroFacing:String;
-		
-		// click-pathfinding control
-		private var path:Array = new Array();
-		private var destination:Point = new Point();
-		private var stepsTillTurn:uint = 5;
-		private var stepsTaken:uint;
-		
 		private var roomsManager:IIsoRoomsManager;
 		private var roomData:IIsoRoomData;
 		
 		private var container_mc:DisplayObjectContainer;
 		
 		private var triggerReset:Boolean = true;
+		
+		private var hero:IHero;
 		
 		public function IsoMaker(aContainer_mc:DisplayObjectContainer, aRoomsManager:IIsoRoomsManager)
 		{
@@ -61,14 +51,11 @@ package dorkbots.dorkbots_iso
 			
 			Create a map class that can be toggled on and off - clean up
 			it only needs heroCartPos
-			as its own createLevel, us only walkable level data	
+			has its own createLevel, us only walkable level data	
 			
 			
 			Block trigers by putting the room numbers into an array.
 			this class double checks this array before swapping rooms.
-			
-			
-			add pathfinding controll
 			
 			*/
 			container_mc = aContainer_mc;
@@ -84,11 +71,17 @@ package dorkbots.dorkbots_iso
 			}
 		}
 		
+		private function containerAddedToStage(event:Event = null):void
+		{
+			container_mc.removeEventListener(Event.ADDED_TO_STAGE, containerAddedToStage);
+			key = new KeyObject(container_mc.stage);
+			container_mc.addEventListener(MouseEvent.CLICK, handleMouseClick);
+		}
+		
 		override public function dispose():void
 		{
 			_canvas = null;
 			key.deconstruct();
-			path.length = 0;
 			roomsManager.dispose();
 			roomData = null;
 			container_mc.removeEventListener(MouseEvent.CLICK, handleMouseClick);
@@ -97,26 +90,29 @@ package dorkbots.dorkbots_iso
 			super.dispose();
 		}
 		
-		private function containerAddedToStage(event:Event = null):void
-		{
-			container_mc.removeEventListener(Event.ADDED_TO_STAGE, containerAddedToStage);
-			key = new KeyObject(container_mc.stage);
-			container_mc.addEventListener(MouseEvent.CLICK, handleMouseClick);
-		}
-		
 		public final function get canvas():Bitmap
 		{
 			return _canvas;
 		}
 
-		public final function createLevel():void
+		public final function start():void
 		{
-			path.length = 0;
-			
+			createRoom();
+		}
+		
+		private function createRoom():void
+		{			
 			cornerPoint.x = cornerPoint.y = 0;
 				
 			roomData = roomsManager.getRoom(roomsManager.roomCurrentNum);
 			roomData.init();
+			
+			if (!hero)
+			{
+				hero = new Hero();
+			}
+			
+			hero.init(roomData.hero, roomData.speed, roomData.entityHalfSize, roomData);
 			
 			borderOffsetX = roomData.borderOffsetX;
 			borderOffsetY = roomData.borderOffsetY;
@@ -126,21 +122,23 @@ package dorkbots.dorkbots_iso
 			RemoveDisplayObjects.removeDisplayObjects(container_mc);
 			container_mc.addChild(_canvas);
 			
-			currentHeroFacing = "";
+			hero.currentFacing = "";
 			
 			if (!roomsManager.roomHasChanged)
 			{
-				heroFacing = currentHeroFacing = roomData.heroFacing;
+				hero.facing = hero.currentFacing = roomData.heroFacing;
 			}
-			
-			roomData.hero.clip.gotoAndStop(heroFacing);
+			hero.entity_mc.clip.gotoAndStop(hero.facing);
 			
 			// Look for hero
 			var buildHero:Boolean = false;
 			var tileType:uint;
-			for (var i:uint = 0; i < roomData.roomEntities.length; i++)
+			
+			// label for the first loop, used for break
+			toploop: 
+			for (var i:uint = 0; i < roomData.roomNodeGridHeight; i++)
 			{
-				for (var j:uint = 0; j < roomData.roomEntities[0].length; j++)
+				for (var j:uint = 0; j < roomData.roomNodeGridWidth; j++)
 				{					
 					if (!roomsManager.roomHasChanged)
 					{
@@ -153,7 +151,7 @@ package dorkbots.dorkbots_iso
 					}
 					else
 					{
-						// rooms have swapped, place hero on trigger
+						// rooms have swapped, place hero on trigger for previous room
 						tileType = roomData.roomTriggers[i][j];
 						if (tileType == roomsManager.roomLastNum + 1)
 						{
@@ -165,7 +163,7 @@ package dorkbots.dorkbots_iso
 					{
 						// found hero
 						// makes sure hero is positioned in the center of the screen
-						var adjustedX:Number = (j * roomData.nodeWidth) - ((j * roomData.nodeWidth) - (roomData.viewWidth * .5)) - roomData.hero.width;
+						var adjustedX:Number = (j * roomData.nodeWidth) - ((j * roomData.nodeWidth) - (roomData.viewWidth * .5)) - hero.entity_mc.width;
 						var adjustedY:Number = (i * roomData.nodeWidth) - ((i * roomData.nodeWidth) - (roomData.viewHeight * .5));
 						
 						var pos:Point = new Point();
@@ -173,22 +171,22 @@ package dorkbots.dorkbots_iso
 						pos.y = adjustedY;	
 						
 						pos = IsoHelper.twoDToIso(pos);
-						roomData.hero.x = roomData.borderOffsetX + pos.x;
-						roomData.hero.y = roomData.borderOffsetY + pos.y;
+						hero.entity_mc.x = roomData.borderOffsetX + pos.x;
+						hero.entity_mc.y = roomData.borderOffsetY + pos.y;
 						
-						heroCartPos.x = j * roomData.nodeWidth;
-						heroCartPos.y = i * roomData.nodeWidth;
+						hero.cartPos.x = j * roomData.nodeWidth;
+						hero.cartPos.y = i * roomData.nodeWidth;
 						
-						heroNode.x = j;
-						heroNode.y = i;		
+						hero.node.x = j;
+						hero.node.y = i;	
 						
 						// repositions the camera so the hero is in the center of the screen
-						cornerPoint.x -= ((j * roomData.nodeWidth) - (roomData.viewWidth * .5)) + roomData.hero.width;
+						cornerPoint.x -= ((j * roomData.nodeWidth) - (roomData.viewWidth * .5)) + hero.entity_mc.width;
 						cornerPoint.y -= ((i * roomData.nodeWidth) - (roomData.viewHeight * .5));	
 						
 						buildHero = false;
 						
-						//heroMoved();
+						break toploop;
 					}
 					
 				}
@@ -207,9 +205,9 @@ package dorkbots.dorkbots_iso
 			var mat:Matrix = new Matrix();
 			var pos:Point = new Point();
 			
-			for (var i:uint = 0; i < roomData.roomNodeHeight; i++)
+			for (var i:uint = 0; i < roomData.roomNodeGridHeight; i++)
 			{
-				for (var j:uint = 0; j < roomData.roomNodeWidth; j++)
+				for (var j:uint = 0; j < roomData.roomNodeGridWidth; j++)
 				{
 					tileType = roomData.roomTerrain[i][j];
 					
@@ -229,12 +227,12 @@ package dorkbots.dorkbots_iso
 						_canvas.bitmapData.draw(roomData.pickupTile, mat);
 					}
 					
-					if(heroNode.x == j && heroNode.y == i)
+					if(hero.node.x == j && hero.node.y == i)
 					{
-						mat.tx = roomData.hero.x;
-						mat.ty = roomData.hero.y;
-						_canvas.bitmapData.draw(roomData.hero, mat);
-					}					
+						mat.tx = hero.entity_mc.x;
+						mat.ty = hero.entity_mc.y;
+						_canvas.bitmapData.draw(hero.entity_mc, mat);
+					}		
 				}
 			}
 			
@@ -243,58 +241,47 @@ package dorkbots.dorkbots_iso
 		
 		//the game loop
 		public final function loop():void
-		{
-			var doDepthSort:Boolean = false;
-			// TO DO
-			// seperate methods for keyboard and click/touch
-			aiWalk();
+		{			
+			hero.loop(cornerPoint);
+			
 			keyBoardControl();
 			
-			if (dY == 0 && dX == 0)
+			hero.move();
+
+			if (hero.moved)
 			{
-				if (heroFacing != "") roomData.hero.clip.gotoAndStop(heroFacing);
-				idle = true;
-			}
-			else if (idle || currentHeroFacing != heroFacing)
-			{
-				idle = false;
-				currentHeroFacing = heroFacing;
-				roomData.hero.clip.gotoAndPlay(heroFacing);
-			}
-			
-			if (! idle && isWalkable())
-			{
-				heroCartPos.x +=  roomData.speed * dX;
-				heroCartPos.y +=  roomData.speed * dY;
+				cornerPoint.x -=  hero.movedAmountPoint.x;
+				cornerPoint.y -=  hero.movedAmountPoint.y;
 				
-				cornerPoint.x -=  roomData.speed * dX;
-				cornerPoint.y -=  roomData.speed * dY;
-				
-				doDepthSort = heroMoved();
+				if (heroMoved())
+				{
+					depthSort();
+				}
 			}
-			
-			if (doDepthSort) depthSort();
-			
-			//tileTxt.text="Hero is on x: "+heroTile.x +" & y: "+heroTile.y;
 		}
 		
+		
+		/**
+		 * heroMoved
+		 * 
+		 * returns Boolean - false if trigger found.
+		 */
 		private function heroMoved():Boolean
 		{
 			// Map
 			/*heroPointer.x = heroCartPos.x;
 			heroPointer.y = heroCartPos.y;*/
 			
-			var newPos:Point = IsoHelper.twoDToIso(heroCartPos);
-			heroNode = IsoHelper.getNodeCoordinates(heroCartPos, roomData.nodeWidth);
+			var newPos:Point = IsoHelper.twoDToIso(hero.cartPos);
 			
-			var pickupType:uint = isPickup( heroNode )
+			var pickupType:uint = isPickup( hero.node );
 			if( pickupType > 0 )
 			{
-				pickupItem( heroNode );
+				pickupItem( hero.node );
 				broadcasterManager.broadcastEvent( IsoEvents.PICKUP_COLLECTED, {type:pickupType});
 			}	
 			
-			var triggerNode:uint = roomData.roomTriggers[ heroNode.y ][ heroNode.x ];
+			var triggerNode:uint = roomData.roomTriggers[ hero.node.y ][ hero.node.x ];
 			if (triggerNode > 0)
 			{
 				// FOUND ROOM SWAP TRIGGER
@@ -306,7 +293,7 @@ package dorkbots.dorkbots_iso
 					{
 						roomsManager.putRoomInStasis(roomData);
 						roomsManager.roomCurrentNum = triggerNode;
-						createLevel();
+						createRoom();
 						
 						broadcasterManager.broadcastEvent(IsoEvents.ROOM_CHANGE);
 						
@@ -324,7 +311,10 @@ package dorkbots.dorkbots_iso
 			return true;
 		}
 		
-		// Pickups
+		
+		/**
+		 * Pickups
+		 */
 		private function isPickup(tilePt:Point):uint
 		{
 			return roomData.roomPickups[ tilePt.y ][ tilePt.x ];
@@ -335,77 +325,16 @@ package dorkbots.dorkbots_iso
 			roomData.roomPickups[ tilePt.y ][ tilePt.x ] = 0;
 		}
 		
-		// room triggers
+		
+		/**
+		 * Room triggers
+		 */
 		private function isTrigger(tilePt:Point):Boolean
 		{
 			return( roomData.roomTriggers[ tilePt.y ][ tilePt.x ] > 0 );
 		}
 		
-		//check for collision tile
-		private function isWalkable():Boolean
-		{
-			var newPos:Point = new Point();
-			newPos.x = heroCartPos.x + (roomData.speed * dX);
-			newPos.y = heroCartPos.y + (roomData.speed * dY);
-			
-			switch (heroFacing)
-			{
-				case "north":
-					newPos.y -= roomData.heroHalfSize;
-					break;
-				
-				case "south":
-					newPos.y += roomData.heroHalfSize;
-					break;
-				
-				case "east":
-					newPos.x += roomData.heroHalfSize;
-					break;
-				
-				case "west":
-					newPos.x -= roomData.heroHalfSize;
-					break;
-				
-				case "northeast":
-					newPos.y -= roomData.heroHalfSize;
-					newPos.x += roomData.heroHalfSize;
-					break;
-				
-				case "southeast":
-					newPos.y += roomData.heroHalfSize;
-					newPos.x += roomData.heroHalfSize;
-					break;
-				
-				case "northwest":
-					newPos.y -= roomData.heroHalfSize;
-					newPos.x -= roomData.heroHalfSize;
-					break;
-				
-				case "southwest":
-					newPos.y += roomData.heroHalfSize;
-					newPos.x -= roomData.heroHalfSize;
-					break;
-			}
-			
-			newPos = IsoHelper.getNodeCoordinates(newPos, roomData.nodeWidth);
-			
-			if (newPos.y < roomData.roomNodeHeight && newPos.x < roomData.roomNodeWidth && newPos.y >= 0 && newPos.x >= 0)
-			{
-				if(roomData.roomWalkable[newPos.y][newPos.x] == 1)
-				{
-					return false;
-				}
-				else
-				{
-					return true;
-				}
-			}
-			else
-			{
-				return false
-			}
-		}
-		
+
 		/**
 		 * Keyboard Control
 		 */
@@ -413,59 +342,60 @@ package dorkbots.dorkbots_iso
 		{
 			var keyControlled:Boolean = false;
 			var pathFinding:Boolean = false;
-			if (path.length > 0) pathFinding = true;
+			if (hero.path.length > 0) pathFinding = true;
 			
 			if (key.isDown( Keyboard.UP ))
 			{
-				dY = -1;
+				hero.dY = -1;
 				keyControlled = true;
 			}
 			else if (key.isDown( Keyboard.DOWN ))
 			{
-				dY = 1;
+				hero.dY = 1;
 				keyControlled = true;
 			}
 			else
 			{
-				if (!pathFinding) dY = 0;
+				if (!pathFinding) hero.dY = 0;
 			}
+			
 			if (key.isDown( Keyboard.RIGHT ))
 			{
-				dX = 1;
-				if (dY == 0)
+				hero.dX = 1;
+				if (hero.dY == 0)
 				{
-					heroFacing = "east";
+					hero.facing = "east";
 				}
-				else if (dY == 1)
+				else if (hero.dY == 1)
 				{
-					heroFacing = "southeast";
-					dX = dY = 0.75;
+					hero.facing = "southeast";
+					hero.dX = hero.dY = 0.75;
 				}
 				else
 				{
-					heroFacing = "northeast";
-					dX = 0.75;
-					dY =- 0.75;
+					hero.facing = "northeast";
+					hero.dX = 0.75;
+					hero.dY =- 0.75;
 				}
 				keyControlled = true;
 			}
 			else if (key.isDown( Keyboard.LEFT ))
 			{
-				dX = -1;
-				if (dY == 0)
+				hero.dX = -1;
+				if (hero.dY == 0)
 				{
-					heroFacing = "west";
+					hero.facing = "west";
 				}
-				else if (dY == 1)
+				else if (hero.dY == 1)
 				{
-					heroFacing = "southwest";
-					dY = 0.75;
-					dX =- 0.75;
+					hero.facing = "southwest";
+					hero.dY = 0.75;
+					hero.dX =- 0.75;
 				}
 				else
 				{
-					heroFacing = "northwest";
-					dX = dY =- 0.75;
+					hero.facing = "northwest";
+					hero.dX = hero.dY =- 0.75;
 				}
 				keyControlled = true;
 			}
@@ -473,18 +403,18 @@ package dorkbots.dorkbots_iso
 			{
 				if (!pathFinding) 
 				{
-					dX = 0;
-					if (dY == 0)
+					hero.dX = 0;
+					if (hero.dY == 0)
 					{
 						//facing="west";
 					}
-					else if (dY == 1)
+					else if (hero.dY == 1)
 					{
-						heroFacing = "south";
+						hero.facing = "south";
 					}
 					else
 					{
-						heroFacing = "north";
+						hero.facing = "north";
 					}
 				}
 			}
@@ -492,146 +422,14 @@ package dorkbots.dorkbots_iso
 			if (keyControlled)
 			{
 				//key board control active. Stop pathfinding
-				path.length = 0;
-			}
-		}
-		
-		/**
-		 * Click/Pathfinding control
-		 */
-		private function aiWalk():void
-		{
-			//trace("{IsoMaker} aiWalk -> path.length = " + path.length);
-			if(path.length == 0)
-			{
-				//path has ended
-				dX = dY = 0;
-				//stepsTaken = 0;
-				
-				return;
-			}
-			
-			if( heroNode.equals(destination) )
-			{
-				//reached current destination, set new, change direction
-				//wait till we are few steps into the tile before we turn
-				stepsTaken++;
-				if(stepsTaken < stepsTillTurn)
-				{
-					return;
-				}
-				
-				//place the hero at tile middle before turn
-				var pos:Point = new Point();
-				pos.x = heroNode.x * roomData.nodeWidth + (roomData.nodeWidth / 2) + cornerPoint.x;
-				pos.y = heroNode.y * roomData.nodeWidth + (roomData.nodeWidth / 2) + cornerPoint.y;
-				
-				pos = IsoHelper.twoDToIso(pos);
-				
-				roomData.hero.x = borderOffsetX + pos.x;
-				roomData.hero.y = borderOffsetY + pos.y;
-				
-				heroCartPos.x = heroNode.x * roomData.nodeWidth + roomData.nodeWidth / 2;
-				heroCartPos.y = heroNode.y * roomData.nodeWidth + roomData.nodeWidth / 2;
-				
-				// TO DO
-				// update Map
-				
-				//new point, turn, find dX,dY
-				stepsTaken = 0;
-				destination = path.pop();
-				if(heroNode.x < destination.x)
-				{
-					dX = 1;
-				}
-				else if(heroNode.x > destination.x)
-				{
-					dX = -1;
-				}
-				else 
-				{
-					dX = 0;
-				}
-				if(heroNode.y < destination.y)
-				{
-					dY = 1;
-				}
-				else if(heroNode.y > destination.y)
-				{
-					dY = -1;
-				}
-				else 
-				{
-					dY = 0;
-				}
-				if(heroNode.x == destination.x)
-				{
-					//top or bottom
-					dX = 0;
-				}
-				else if(heroNode.y == destination.y)
-				{
-					//left or right
-					dY = 0;
-				}
-				
-				if (dX == 1)
-				{
-					if (dY == 0)
-					{
-						heroFacing = "east";
-					}
-					else if (dY == 1)
-					{
-						heroFacing = "southeast";
-						dX = dY = 0.75;
-					}
-					else
-					{
-						heroFacing = "northeast";
-						dX = 0.75;
-						dY = -0.75;
-					}
-				}
-				else if (dX == -1)
-				{
-					if (dY == 0)
-					{
-						heroFacing = "west";
-					}
-					else if (dY == 1)
-					{
-						heroFacing = "southwest";
-						dY = 0.75;
-						dX = -0.75;
-					}
-					else
-					{
-						heroFacing= "northwest";
-						dX = dY = -0.75;
-					}
-				}
-				else
-				{
-					if (dY == 0)
-					{
-						heroFacing = currentHeroFacing;
-					}
-					else if (dY == 1)
-					{
-						heroFacing = "south";
-					}
-					else
-					{
-						heroFacing = "north";
-					}
-				}
+				hero.path.length = 0;
 			}
 		}
 		
 		private function handleMouseClick(e:MouseEvent):void
 		{
-			path.splice(0, path.length);
+			hero.path.length = 0;
+			
 			var clickPt:Point = new Point();
 			
 			clickPt.x = e.stageX - borderOffsetX;
@@ -646,7 +444,6 @@ package dorkbots.dorkbots_iso
 			
 			//trace("{IsoMaker} handleMouseClick -> half node width clickPt = " + clickPt);
 			
-			
 			clickPt = IsoHelper.getNodeCoordinates( clickPt, roomData.nodeWidth );
 			//trace("{IsoMaker} handleMouseClick -> clickPt in Node Coordinates = " + clickPt);
 			if(clickPt.x < 0 || clickPt.y < 0 || clickPt.x > roomData.roomWalkable.length - 1 || clickPt.x > roomData.roomWalkable[0].length - 1)
@@ -654,17 +451,15 @@ package dorkbots.dorkbots_iso
 				//trace("{IsoMaker} handleMouseClick -> clicked outside of the room");
 				return;
 			}
+			
 			if(roomData.roomWalkable[clickPt.y][clickPt.x] > 0)
 			{
 				//trace("{IsoMaker} handleMouseClick -> clicked on a non walkable node");
 				return;
 			}
+			
 			//trace("{IsoMaker} handleMouseClick -> heroNode = " + heroNode + ", clickPt = " + clickPt);
-			destination = heroNode;
-			path = PathFinder.go( heroNode.x, heroNode.y, clickPt.x, clickPt.y, roomData.roomWalkable );
-			path.reverse();
-			path.push(clickPt);
-			path.reverse();
+			hero.createPath(clickPt);
 			
 			// TO DO
 			// display path in Map
