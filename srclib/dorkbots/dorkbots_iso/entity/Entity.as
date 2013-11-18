@@ -32,8 +32,8 @@ package dorkbots.dorkbots_iso.entity
 		private var _dX:Number = 0;
 		private var _dY:Number = 0;
 		private var idle:Boolean = true;
-		private var _facing:String;
-		private var _currentFacing:String;
+		private var _facingNext:String = "south";;
+		private var _facingCurrent:String = _facingNext;
 		
 		private var _moved:Boolean = true;
 		
@@ -41,21 +41,6 @@ package dorkbots.dorkbots_iso.entity
 		
 		public function Entity()
 		{
-		}
-		
-		public function init(a_mc:MovieClip, aSpeed:Number, aHalfSize:Number, aRoomData:IIsoRoomData):IEntity
-		{
-			_path.length = 0;
-			_entity_mc = a_mc;
-			speed = aSpeed;
-			_halfSize = aHalfSize;
-			roomData = aRoomData;
-			borderOffsetX = roomData.borderOffsetX;
-			borderOffsetY = roomData.borderOffsetY;
-			
-			stepsTillTurn = Math.floor((roomData.nodeWidth / 2) / speed);
-			
-			return this;
 		}
 		
 		public final function get dY():Number
@@ -118,24 +103,53 @@ package dorkbots.dorkbots_iso.entity
 			return _entity_mc;
 		}
 		
-		public final function get facing():String
+		public final function get facingNexy():String
 		{
-			return _facing;
+			return _facingNext;
 		}
 		
-		public final function set facing(value:String):void
+		public final function set facingNexy(value:String):void
 		{
-			_facing = value;
+			_facingNext = value;
 		}
 		
-		public final function get currentFacing():String
+		public final function get facingCurrent():String
 		{
-			return _currentFacing;
+			return _facingCurrent;
 		}
 		
-		public final function set currentFacing(value:String):void
+		public final function set facingCurrent(value:String):void
 		{
-			_currentFacing = value;
+			_facingCurrent = value;
+		}
+		
+		public function init(a_mc:MovieClip, aSpeed:Number, aHalfSize:Number, aRoomData:IIsoRoomData):IEntity
+		{
+			_path.length = 0;
+			_entity_mc = a_mc;
+			_entity_mc.clip.gotoAndStop(_facingNext);
+			speed = aSpeed;
+			_halfSize = aHalfSize;
+			roomData = aRoomData;
+			borderOffsetX = roomData.borderOffsetX;
+			borderOffsetY = roomData.borderOffsetY;
+			
+			stepsTillTurn = Math.floor((roomData.nodeWidth / 2) / speed);
+			
+			return this;
+		}
+		
+		public function dispose():void
+		{
+			roomData = null;
+			cornerPoint = null;
+			_cartPos = null;
+			_node = null;
+			_path.length = 0;
+			_path = null;
+			destination = null;
+			_movedAmountPoint = null;
+			_entity_mc = null;
 		}
 		
 		public final function loop(aCornerPoint:Point):void
@@ -151,14 +165,14 @@ package dorkbots.dorkbots_iso.entity
 			_moved = false;
 			if (dY == 0 && dX == 0)
 			{
-				if (_facing != "") _entity_mc.clip.gotoAndStop(_facing);
+				if (_facingNext != "") _entity_mc.clip.gotoAndStop(_facingNext);
 				idle = true;
 			}
-			else if (idle || _currentFacing != _facing)
+			else if (idle || _facingCurrent != _facingNext)
 			{
 				idle = false;
-				_currentFacing = _facing;
-				_entity_mc.clip.gotoAndPlay(_facing);
+				_facingCurrent = _facingNext;
+				_entity_mc.clip.gotoAndPlay(_facingNext);
 			}
 			
 			if (! idle && isWalkable())
@@ -178,7 +192,7 @@ package dorkbots.dorkbots_iso.entity
 			newPos.x = _cartPos.x + (speed * dX);
 			newPos.y = _cartPos.y + (speed * dY);
 			
-			switch (_facing)
+			switch (_facingNext)
 			{
 				case "north":
 					newPos.y -= _halfSize;
@@ -322,16 +336,16 @@ package dorkbots.dorkbots_iso.entity
 			{
 				if (dY == 0)
 				{
-					_facing = "east";
+					_facingNext = "east";
 				}
 				else if (dY == 1)
 				{
-					_facing = "southeast";
+					_facingNext = "southeast";
 					dX = dY = 0.75;
 				}
 				else
 				{
-					_facing = "northeast";
+					_facingNext = "northeast";
 					dX = 0.75;
 					dY = -0.75;
 				}
@@ -340,17 +354,17 @@ package dorkbots.dorkbots_iso.entity
 			{
 				if (dY == 0)
 				{
-					_facing = "west";
+					_facingNext = "west";
 				}
 				else if (dY == 1)
 				{
-					_facing = "southwest";
+					_facingNext = "southwest";
 					dY = 0.75;
 					dX = -0.75;
 				}
 				else
 				{
-					_facing= "northwest";
+					_facingNext= "northwest";
 					dX = dY = -0.75;
 				}
 			}
@@ -358,21 +372,22 @@ package dorkbots.dorkbots_iso.entity
 			{
 				if (dY == 0)
 				{
-					_facing = _currentFacing;
+					_facingNext = _facingCurrent;
 				}
 				else if (dY == 1)
 				{
-					_facing = "south";
+					_facingNext = "south";
 				}
 				else
 				{
-					_facing = "north";
+					_facingNext = "north";
 				}
 			}
 		}
 		
-		public final function createPath(nodePoint:Point):void
+		public final function findPathToNode(nodePoint:Point):void
 		{
+			stepsTaken = 0;
 			destination = _node;
 			_path = PathFinder.go( _node.x, _node.y, nodePoint.x, nodePoint.y, roomData.roomWalkable );
 			path.reverse();

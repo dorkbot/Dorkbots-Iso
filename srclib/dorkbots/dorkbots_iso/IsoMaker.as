@@ -122,13 +122,13 @@ package dorkbots.dorkbots_iso
 			RemoveDisplayObjects.removeDisplayObjects(container_mc);
 			container_mc.addChild(_canvas);
 			
-			hero.currentFacing = "";
+			hero.facingCurrent = "";
 			
 			if (!roomsManager.roomHasChanged)
 			{
-				hero.facing = hero.currentFacing = roomData.heroFacing;
+				hero.facingNexy = hero.facingCurrent = roomData.heroFacing;
 			}
-			hero.entity_mc.clip.gotoAndStop(hero.facing);
+			hero.entity_mc.clip.gotoAndStop(hero.facingNexy);
 			
 			// Look for hero
 			var buildHero:Boolean = false;
@@ -364,16 +364,16 @@ package dorkbots.dorkbots_iso
 				hero.dX = 1;
 				if (hero.dY == 0)
 				{
-					hero.facing = "east";
+					hero.facingNexy = "east";
 				}
 				else if (hero.dY == 1)
 				{
-					hero.facing = "southeast";
+					hero.facingNexy = "southeast";
 					hero.dX = hero.dY = 0.75;
 				}
 				else
 				{
-					hero.facing = "northeast";
+					hero.facingNexy = "northeast";
 					hero.dX = 0.75;
 					hero.dY =- 0.75;
 				}
@@ -384,17 +384,17 @@ package dorkbots.dorkbots_iso
 				hero.dX = -1;
 				if (hero.dY == 0)
 				{
-					hero.facing = "west";
+					hero.facingNexy = "west";
 				}
 				else if (hero.dY == 1)
 				{
-					hero.facing = "southwest";
+					hero.facingNexy = "southwest";
 					hero.dY = 0.75;
 					hero.dX =- 0.75;
 				}
 				else
 				{
-					hero.facing = "northwest";
+					hero.facingNexy = "northwest";
 					hero.dX = hero.dY =- 0.75;
 				}
 				keyControlled = true;
@@ -410,11 +410,11 @@ package dorkbots.dorkbots_iso
 					}
 					else if (hero.dY == 1)
 					{
-						hero.facing = "south";
+						hero.facingNexy = "south";
 					}
 					else
 					{
-						hero.facing = "north";
+						hero.facingNexy = "north";
 					}
 				}
 			}
@@ -459,7 +459,7 @@ package dorkbots.dorkbots_iso
 			}
 			
 			//trace("{IsoMaker} handleMouseClick -> heroNode = " + heroNode + ", clickPt = " + clickPt);
-			hero.createPath(clickPt);
+			hero.findPathToNode(clickPt);
 			
 			// TO DO
 			// display path in Map
