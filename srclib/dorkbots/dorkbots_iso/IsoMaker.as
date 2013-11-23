@@ -201,7 +201,7 @@ package dorkbots.dorkbots_iso
 				}
 			}
 			
-			createEnemiesWalkable();
+			updateEnemiesWalkable();
 			
 			for (i = 0; i < enemies.length; i++)
 			{
@@ -222,32 +222,6 @@ package dorkbots.dorkbots_iso
 			
 			entity.node.x = x;
 			entity.node.y = y;
-		}
-		
-		private function createEnemiesWalkable():void
-		{
-			// create enemy walkable array
-			var newWalkable:Array = new Array();
-			
-			var i:int;
-			var enemy:IEnemy;
-			
-			for (i = 0; i < roomData.roomNodeGridHeight; i++)
-			{
-				newWalkable[i] = new Array();
-				for (var j:uint = 0; j < roomData.roomNodeGridWidth; j++)
-				{
-					newWalkable[i][j] = roomData.roomWalkable[i][j];
-				}
-			}
-			
-			for (i = 0; i < roomData.enemies.length; i++) 
-			{
-				enemy = roomData.enemies[i];
-				newWalkable[enemy.node.y][enemy.node.x] = 1;
-			}
-			
-			roomData.enemiesWalkable = newWalkable;
 		}
 		
 		//sort depth & draw to canvas
@@ -357,7 +331,7 @@ package dorkbots.dorkbots_iso
 			}
 			
 			// move enemies
-			createEnemiesWalkable();
+			updateEnemiesWalkable();
 			
 			var i:int;
 			var enemy:IEnemy;
@@ -469,6 +443,10 @@ package dorkbots.dorkbots_iso
 			}
 		}
 		
+		
+		/**
+		 * ENEMIES STUFF
+		 */
 		// TO DO
 		// put enemies in statis
 		private function disposeOfEnemies():void
@@ -491,6 +469,25 @@ package dorkbots.dorkbots_iso
 				enemy.dispose();
 			}
 			enemies.length = 0;
+		}
+		
+		private function updateEnemiesWalkable():void
+		{
+			var newWalkable:Array = roomData.enemiesWalkable;
+			
+			var i:int;
+			var enemy:IEnemy;
+			
+			for (i = 0; i < roomData.roomNodeGridHeight; i++)
+			{
+				newWalkable[i] = roomData.roomWalkable[i].slice();
+			}
+			
+			for (i = 0; i < roomData.enemies.length; i++) 
+			{
+				enemy = roomData.enemies[i];
+				newWalkable[enemy.node.y][enemy.node.x] = 1;
+			}
 		}
 		
 		

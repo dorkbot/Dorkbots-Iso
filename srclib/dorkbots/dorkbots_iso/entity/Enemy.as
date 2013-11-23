@@ -9,28 +9,6 @@ package dorkbots.dorkbots_iso.entity
 		
 		override protected function getWalkable():Array
 		{
-			// create enemy walkable array
-			/*var newWalkable:Array = new Array();
-			
-			var i:int;
-			var enemy:IEnemy;
-			
-			for (i = 0; i < roomData.roomNodeGridHeight; i++)
-			{
-				newWalkable[i] = new Array();
-				for (var j:uint = 0; j < roomData.roomNodeGridWidth; j++)
-				{
-					newWalkable[i][j] = roomData.roomWalkable[i][j];
-				}
-			}
-			
-			for (i = 0; i < roomData.enemies.length; i++) 
-			{
-				enemy = roomData.enemies[i];
-				newWalkable[enemy.node.y][enemy.node.x] = 1;
-			}
-			
-			return newWalkable;*/
 			return roomData.enemiesWalkable;
 		}
 	}
