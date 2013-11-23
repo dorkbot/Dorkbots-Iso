@@ -1,7 +1,6 @@
 package dorkbots.dorkbots_iso
 {
 	import com.csharks.juwalbose.IsoHelper;
-	import com.newarteest.path_finder.PathFinder;
 	import com.senocular.utils.KeyObject;
 	
 	import flash.display.Bitmap;
@@ -15,11 +14,16 @@ package dorkbots.dorkbots_iso
 	import flash.ui.Keyboard;
 	
 	import dorkbots.dorkbots_broadcasters.BroadcastingObject;
+	import dorkbots.dorkbots_broadcasters.IBroadcastedEvent;
+	import dorkbots.dorkbots_iso.entity.Enemy;
+	import dorkbots.dorkbots_iso.entity.Entity;
+	import dorkbots.dorkbots_iso.entity.Hero;
+	import dorkbots.dorkbots_iso.entity.IEnemy;
+	import dorkbots.dorkbots_iso.entity.IEntity;
 	import dorkbots.dorkbots_iso.entity.IHero;
 	import dorkbots.dorkbots_iso.room.IIsoRoomData;
 	import dorkbots.dorkbots_iso.room.IIsoRoomsManager;
 	import dorkbots.dorkbots_util.RemoveDisplayObjects;
-	import dorkbots.dorkbots_iso.entity.Hero;
 
 	public class IsoMaker extends BroadcastingObject implements IIsoMaker
 	{		
@@ -27,7 +31,7 @@ package dorkbots.dorkbots_iso
 		private var _canvas:Bitmap;
 		private var rect:Rectangle;
 		
-		private var cornerPoint:Point = new Point();
+		private var viewPortcornerPoint:Point = new Point();
 		
 		private var borderOffsetX:Number;
 		private var borderOffsetY:Number;
@@ -43,6 +47,7 @@ package dorkbots.dorkbots_iso
 		private var triggerReset:Boolean = true;
 		
 		private var hero:IHero;
+		private var enemies:Vector.<IEnemy> = new Vector.<IEnemy>();
 		
 		public function IsoMaker(aContainer_mc:DisplayObjectContainer, aRoomsManager:IIsoRoomsManager)
 		{
@@ -102,7 +107,7 @@ package dorkbots.dorkbots_iso
 		
 		private function createRoom():void
 		{			
-			cornerPoint.x = cornerPoint.y = 0;
+			viewPortcornerPoint.x = viewPortcornerPoint.y = 0;
 				
 			roomData = roomsManager.getRoom(roomsManager.roomCurrentNum);
 			roomData.init();
@@ -112,7 +117,7 @@ package dorkbots.dorkbots_iso
 				hero = new Hero();
 			}
 			
-			hero.init(roomData.hero, roomData.speed, roomData.entityHalfSize, roomData);
+			hero.init(roomData.hero, roomData.speed, roomData.heroHalfSize, roomData, 1);
 			
 			borderOffsetX = roomData.borderOffsetX;
 			borderOffsetY = roomData.borderOffsetY;
@@ -126,24 +131,27 @@ package dorkbots.dorkbots_iso
 			
 			if (!roomsManager.roomHasChanged)
 			{
-				hero.facingNexy = hero.facingCurrent = roomData.heroFacing;
+				hero.facingNext = hero.facingCurrent = roomData.heroFacing;
 			}
-			hero.entity_mc.clip.gotoAndStop(hero.facingNexy);
+			hero.entity_mc.clip.gotoAndStop(hero.facingNext);
 			
 			// Look for hero
 			var buildHero:Boolean = false;
 			var tileType:uint;
-			
+			var adjustedX:Number;
+			var adjustedY:Number;
+			var enemy:IEnemy;
+			var i:uint;
 			// label for the first loop, used for break
 			toploop: 
-			for (var i:uint = 0; i < roomData.roomNodeGridHeight; i++)
+			for (i = 0; i < roomData.roomNodeGridHeight; i++)
 			{
 				for (var j:uint = 0; j < roomData.roomNodeGridWidth; j++)
-				{					
+				{		
+					tileType = roomData.roomEntities[i][j];
 					if (!roomsManager.roomHasChanged)
 					{
 						// first room
-						tileType = roomData.roomEntities[i][j];
 						if (tileType == 1)
 						{
 							buildHero = true;
@@ -152,47 +160,64 @@ package dorkbots.dorkbots_iso
 					else
 					{
 						// rooms have swapped, place hero on trigger for previous room
-						tileType = roomData.roomTriggers[i][j];
-						if (tileType == roomsManager.roomLastNum + 1)
+						if (roomData.roomTriggers[i][j] == roomsManager.roomLastNum + 1)
 						{
 							buildHero = true;
 						}	
+					}
+					//trace("tileType = " + tileType);
+					if (tileType > 1)
+					{
+						//trace("found enemy j = " + j + ", i = " + i);
+						enemy = new Enemy();
+						enemy.addEventListener( Entity.PATH_ARRIVED_NEXT_NODE, enemyArrivedAtNextPathNode);
+						enemies.push( enemy.init( roomData.createEnemy(tileType), roomData.speed, roomData.enemyHalfSize, roomData, tileType ) );
+
+						placeEntity(enemy, j, i, tileType);
 					}
 					
 					if (buildHero)
 					{
 						// found hero
 						// makes sure hero is positioned in the center of the screen
-						var adjustedX:Number = (j * roomData.nodeWidth) - ((j * roomData.nodeWidth) - (roomData.viewWidth * .5)) - hero.entity_mc.width;
-						var adjustedY:Number = (i * roomData.nodeWidth) - ((i * roomData.nodeWidth) - (roomData.viewHeight * .5));
+						placeEntity(hero, j, i, tileType);
 						
-						var pos:Point = new Point();
-						pos.x = adjustedX;
-						pos.y = adjustedY;	
+						viewPortcornerPoint.x -= (hero.cartPos.x - (roomData.viewWidth / 2));
+						viewPortcornerPoint.y -= hero.cartPos.y - (roomData.viewHeight / 2);
 						
+						var pos:Point = hero.cartPos.clone();
+						pos.x += viewPortcornerPoint.x;
+						pos.y += viewPortcornerPoint.y;
 						pos = IsoHelper.twoDToIso(pos);
-						hero.entity_mc.x = roomData.borderOffsetX + pos.x;
-						hero.entity_mc.y = roomData.borderOffsetY + pos.y;
-						
-						hero.cartPos.x = j * roomData.nodeWidth;
-						hero.cartPos.y = i * roomData.nodeWidth;
-						
-						hero.node.x = j;
-						hero.node.y = i;	
-						
-						// repositions the camera so the hero is in the center of the screen
-						cornerPoint.x -= ((j * roomData.nodeWidth) - (roomData.viewWidth * .5)) + hero.entity_mc.width;
-						cornerPoint.y -= ((i * roomData.nodeWidth) - (roomData.viewHeight * .5));	
+						hero.entity_mc.x = borderOffsetX + pos.x;
+						hero.entity_mc.y = borderOffsetY + pos.y;
 						
 						buildHero = false;
 						
-						break toploop;
+						//break toploop;
 					}
-					
 				}
 			}
 			
+			for (i = 0; i < enemies.length; i++)
+			{
+				enemies[i].findPathToNode(hero.node);
+			}
+			
+			roomData.enemies = enemies;
+			
+			//trace("enemies = " + enemies.length);
 			depthSort();
+		}
+		
+		private function placeEntity(entity:IEntity, x:uint, y:uint, type):void
+		{			
+			//find the middle of the node
+			entity.cartPos.x = x * roomData.nodeWidth + (roomData.nodeWidth / 2);
+			entity.cartPos.y = y * roomData.nodeWidth + (roomData.nodeWidth / 2);
+			
+			entity.node.x = x;
+			entity.node.y = y;
 		}
 		
 		//sort depth & draw to canvas
@@ -204,15 +229,22 @@ package dorkbots.dorkbots_iso
 			var tileType:uint;
 			var mat:Matrix = new Matrix();
 			var pos:Point = new Point();
+			var enemy:IEnemy;
+			var addHero:Boolean = false;
+			var entitiesToAddToNode:Array = new Array();
+			var k:int = 0;
 			
 			for (var i:uint = 0; i < roomData.roomNodeGridHeight; i++)
 			{
 				for (var j:uint = 0; j < roomData.roomNodeGridWidth; j++)
 				{
+					entitiesToAddToNode.length = 0;
+					addHero = false;
+					
 					tileType = roomData.roomTerrain[i][j];
 					
-					pos.x = j * roomData.nodeWidth + cornerPoint.x;
-					pos.y = i * roomData.nodeWidth + cornerPoint.y;
+					pos.x = j * roomData.nodeWidth + viewPortcornerPoint.x;
+					pos.y = i * roomData.nodeWidth + viewPortcornerPoint.y;
 					
 					pos = IsoHelper.twoDToIso(pos);
 					mat.tx = borderOffsetX + pos.x;
@@ -229,10 +261,42 @@ package dorkbots.dorkbots_iso
 					
 					if(hero.node.x == j && hero.node.y == i)
 					{
+						addHero = true;
 						mat.tx = hero.entity_mc.x;
 						mat.ty = hero.entity_mc.y;
-						_canvas.bitmapData.draw(hero.entity_mc, mat);
-					}		
+						//trace("hero.entity_mc.x = " + hero.entity_mc.x + ", hero.entity_mc.y = " + hero.entity_mc.y);
+						//_canvas.bitmapData.draw(hero.entity_mc, mat);
+						
+						entitiesToAddToNode.push( {matrixTY: mat.ty, matrix: mat.clone(), entity: hero} );
+					}
+					
+					// add enemies to canvas
+					for (k = 0; k < enemies.length; k++) 
+					{
+						enemy = enemies[k];
+						if(enemy.node.x == j && enemy.node.y == i)
+						{
+							pos.x = enemy.cartPos.x + viewPortcornerPoint.x;
+							pos.y = enemy.cartPos.y + viewPortcornerPoint.y;
+							pos = IsoHelper.twoDToIso(pos);
+							mat.tx = borderOffsetX + pos.x;
+							mat.ty = borderOffsetY + pos.y;
+							//_canvas.bitmapData.draw(enemy.entity_mc, mat);
+							
+							entitiesToAddToNode.push( {matrixTY: mat.ty, matrix: mat.clone(), entity: enemy} );
+						}
+					}
+					
+					// add entities bassed on their matrix.ty, so that entities with a higher ty will be drawn in front
+					if (entitiesToAddToNode.length > 0)
+					{
+						entitiesToAddToNode.sortOn("matrixTY", Array.NUMERIC);
+						for (k = 0; k < entitiesToAddToNode.length; k++) 
+						{
+							_canvas.bitmapData.draw( IEntity(entitiesToAddToNode[k].entity).entity_mc, entitiesToAddToNode[k].matrix);
+						}
+						
+					}
 				}
 			}
 			
@@ -241,22 +305,54 @@ package dorkbots.dorkbots_iso
 		
 		//the game loop
 		public final function loop():void
-		{			
-			hero.loop(cornerPoint);
+		{
+			var movement:Boolean = false;
+			
+			hero.loop();
 			
 			keyBoardControl();
 			
 			hero.move();
-
+			
 			if (hero.moved)
-			{
-				cornerPoint.x -=  hero.movedAmountPoint.x;
-				cornerPoint.y -=  hero.movedAmountPoint.y;
-				
+			{				
 				if (heroMoved())
 				{
-					depthSort();
+					movement = true;
+					
+					viewPortcornerPoint.x -=  hero.movedAmountPoint.x;
+					viewPortcornerPoint.y -=  hero.movedAmountPoint.y;
 				}
+			}
+			
+			var enemy:IEnemy;
+			for (var i:int = 0; i < enemies.length; i++) 
+			{
+				enemy = enemies[i];
+				enemy.loop();
+				enemy.move();
+				
+				// if enemy has stopped hunting, set a new path for the hero
+				if (!enemy.finalDestination && !enemy.node.equals(hero.node) )
+				{
+					enemy.findPathToNode(hero.node);
+				}
+				
+				if (enemy.moved)
+				{
+					//trace("enemy move");
+					movement = true;
+				}
+				
+				if (enemy.node.equals(hero.node))
+				{
+					//trace("hero and enemy share same node!!!");
+				}
+			}
+			
+			if (movement)
+			{
+				depthSort();
 			}
 		}
 		
@@ -291,13 +387,7 @@ package dorkbots.dorkbots_iso
 				{
 					if (triggerReset)
 					{
-						roomsManager.putRoomInStasis(roomData);
-						roomsManager.roomCurrentNum = triggerNode;
-						createRoom();
-						
-						broadcasterManager.broadcastEvent(IsoEvents.ROOM_CHANGE);
-						
-						triggerReset = false;
+						swapRoom(triggerNode);
 						
 						return false;
 					}
@@ -311,6 +401,58 @@ package dorkbots.dorkbots_iso
 			return true;
 		}
 		
+		private function swapRoom(roomNumber:uint):void
+		{
+			disposeOfEnemies();
+			
+			roomsManager.putRoomInStasis(roomData);
+			roomsManager.roomCurrentNum = roomNumber;
+			createRoom();
+			
+			broadcasterManager.broadcastEvent(IsoEvents.ROOM_CHANGE);
+			
+			triggerReset = false;
+		}
+		
+		private function enemyArrivedAtNextPathNode(event:IBroadcastedEvent):void
+		{
+			var enemy:IEnemy = IEnemy(event.owner);
+			if (enemy.finalDestination)
+			{
+				if(!enemy.finalDestination.equals(hero.node)) 
+				{
+					enemy.findPathToNode(hero.node);
+				}
+			}
+			else
+			{
+				if ( !enemy.node.equals(hero.node) ) enemy.findPathToNode(hero.node);
+			}
+		}
+		
+		// TO DO
+		// put enemies in statis
+		private function disposeOfEnemies():void
+		{
+			var i:uint;
+			for (i = 0; i < roomData.roomEntities.length; i++) 
+			{
+				for (var j:int = 0; j < roomData.roomEntities[i].length; j++) 
+				{
+					roomData.roomEntities[i][j] = 0;
+				}
+			}
+			
+			var enemy:IEnemy
+			for (i = 0; i < enemies.length; i++) 
+			{
+				enemy = enemies[i];
+				enemy.removeEventListener( Entity.PATH_ARRIVED_NEXT_NODE, enemyArrivedAtNextPathNode);
+				roomData.roomEntities[enemy.node.y][enemy.node.x] = enemy.type;
+				enemy.dispose();
+			}
+			enemies.length = 0;
+		}
 		
 		/**
 		 * Pickups
@@ -364,16 +506,16 @@ package dorkbots.dorkbots_iso
 				hero.dX = 1;
 				if (hero.dY == 0)
 				{
-					hero.facingNexy = "east";
+					hero.facingNext = "east";
 				}
 				else if (hero.dY == 1)
 				{
-					hero.facingNexy = "southeast";
+					hero.facingNext = "southeast";
 					hero.dX = hero.dY = 0.75;
 				}
 				else
 				{
-					hero.facingNexy = "northeast";
+					hero.facingNext = "northeast";
 					hero.dX = 0.75;
 					hero.dY =- 0.75;
 				}
@@ -384,17 +526,17 @@ package dorkbots.dorkbots_iso
 				hero.dX = -1;
 				if (hero.dY == 0)
 				{
-					hero.facingNexy = "west";
+					hero.facingNext = "west";
 				}
 				else if (hero.dY == 1)
 				{
-					hero.facingNexy = "southwest";
+					hero.facingNext = "southwest";
 					hero.dY = 0.75;
 					hero.dX =- 0.75;
 				}
 				else
 				{
-					hero.facingNexy = "northwest";
+					hero.facingNext = "northwest";
 					hero.dX = hero.dY =- 0.75;
 				}
 				keyControlled = true;
@@ -410,11 +552,11 @@ package dorkbots.dorkbots_iso
 					}
 					else if (hero.dY == 1)
 					{
-						hero.facingNexy = "south";
+						hero.facingNext = "south";
 					}
 					else
 					{
-						hero.facingNexy = "north";
+						hero.facingNext = "north";
 					}
 				}
 			}
@@ -423,6 +565,7 @@ package dorkbots.dorkbots_iso
 			{
 				//key board control active. Stop pathfinding
 				hero.path.length = 0;
+				//hero.moved = true;
 			}
 		}
 		
@@ -439,8 +582,8 @@ package dorkbots.dorkbots_iso
 			clickPt = IsoHelper.isoTo2D(clickPt);
 			//trace("{IsoMaker} handleMouseClick -> isoTo2D clickPt = " + clickPt);
 			
-			clickPt.x -= roomData.nodeWidth / 2 + cornerPoint.x;
-			clickPt.y += roomData.nodeWidth / 2 - cornerPoint.y;
+			clickPt.x -= roomData.nodeWidth / 2 + viewPortcornerPoint.x;
+			clickPt.y += roomData.nodeWidth / 2 - viewPortcornerPoint.y;
 			
 			//trace("{IsoMaker} handleMouseClick -> half node width clickPt = " + clickPt);
 			
@@ -458,7 +601,7 @@ package dorkbots.dorkbots_iso
 				return;
 			}
 			
-			//trace("{IsoMaker} handleMouseClick -> heroNode = " + heroNode + ", clickPt = " + clickPt);
+			//trace("{IsoMaker} handleMouseClick -> hero Node = " + hero.node + ", clickPt = " + clickPt);
 			hero.findPathToNode(clickPt);
 			
 			// TO DO

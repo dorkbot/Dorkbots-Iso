@@ -1,6 +1,8 @@
 package dorkbots.dorkbots_iso.room
 {
 	import flash.display.MovieClip;
+	
+	import dorkbots.dorkbots_iso.entity.IEnemy;
 
 	public class IsoRoomData implements IIsoRoomData
 	{
@@ -22,7 +24,12 @@ package dorkbots.dorkbots_iso.room
 		// hero
 		protected var heroClass:Class;
 		private var _hero:MovieClip;
-		protected var _entityHalfSize:uint = 20;
+		protected var _heroHalfSize:uint = 20;
+		
+		// enemy
+		protected var enemyClass:Class;
+		protected var _enemyHalfSize:uint = 20;
+		private var _enemies:Vector.<IEnemy> = new Vector.<IEnemy>();
 		
 		//the tiles
 		protected var terrainTileClass:Class;
@@ -64,6 +71,8 @@ package dorkbots.dorkbots_iso.room
 			_roomEntities = null;
 			
 			heroClass = null;
+			enemyClass = null;
+			_enemies.length = 0;
 			terrainTileClass = null;
 			pickupTileClass = null;
 			
@@ -98,12 +107,31 @@ package dorkbots.dorkbots_iso.room
 			return _hero;
 		}
 
-		
-		public final function get entityHalfSize():uint
+		public final function get heroHalfSize():uint
 		{
-			return _entityHalfSize;
+			return _heroHalfSize;
 		}
-
+		
+		public function get enemyHalfSize():uint
+		{
+			return _enemyHalfSize;
+		}
+		
+		public function createEnemy(type:uint):MovieClip
+		{
+			return new enemyClass();
+		}
+		
+		public final function set enemies(value:Vector.<IEnemy>):void
+		{
+			_enemies = value;
+		}
+		
+		public final function get enemies():Vector.<IEnemy>
+		{
+			return _enemies;
+		}
+		
 		public final function get borderOffsetX():uint
 		{
 			return _borderOffsetX;

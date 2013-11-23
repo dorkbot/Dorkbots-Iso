@@ -1,6 +1,8 @@
 package dorkbots.dorkbots_iso.room
 {
 	import flash.display.MovieClip;
+	
+	import dorkbots.dorkbots_iso.entity.IEnemy;
 
 	public interface IIsoRoomData
 	{
@@ -10,8 +12,12 @@ package dorkbots.dorkbots_iso.room
 		function get speed():uint;
 		function get terrainTile():MovieClip;
 		function get pickupTile():MovieClip;
-		function get entityHalfSize():uint;
+		function get heroHalfSize():uint;
 		function get hero():MovieClip;
+		function get enemyHalfSize():uint;
+		function createEnemy(type:uint):MovieClip;
+		function get enemies():Vector.<IEnemy>;
+		function set enemies(value:Vector.<IEnemy>):void;
 		function get borderOffsetX():uint;
 		function get borderOffsetY():uint;
 		function get nodeWidth():uint;

@@ -11,10 +11,10 @@ package
 	
 	import dorkbots.dorkbots_broadcasters.IBroadcastedEvent;
 	
-	import rooms.Room0Data;
 	import rooms.Room1Data;
 	import rooms.Room2Data;
 	import rooms.Room3Data;
+	import rooms.Room4Data;
 	
 	[SWF(width='800', height='600', backgroundColor='#FFFFFF', frameRate='30')]
 	public class Main extends Sprite
@@ -24,10 +24,10 @@ package
 		public function Main()
 		{
 			var roomsManager:IIsoRoomsManager = new IsoRoomsManager();
-			roomsManager.addRoom( Room0Data );
 			roomsManager.addRoom( Room1Data );
 			roomsManager.addRoom( Room2Data );
 			roomsManager.addRoom( Room3Data );
+			roomsManager.addRoom( Room4Data );
 			
 			var isoContainer:Sprite = new Sprite();
 			addChild(isoContainer);

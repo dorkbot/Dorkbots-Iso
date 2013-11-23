@@ -6,24 +6,27 @@ package dorkbots.dorkbots_iso.entity
 	import flash.display.MovieClip;
 	import flash.geom.Point;
 	
+	import dorkbots.dorkbots_broadcasters.BroadcastingObject;
 	import dorkbots.dorkbots_iso.room.IIsoRoomData;
 
-	public class Entity implements IEntity
+	public class Entity extends BroadcastingObject implements IEntity
 	{
-		private var roomData:IIsoRoomData;
+		public static const PATH_ARRIVED_NEXT_NODE:String = "path arrived next node";
 		
-		private var cornerPoint:Point = new Point();
+		protected var roomData:IIsoRoomData;
+		private var _type:uint;
 		
 		private var borderOffsetX:Number;
 		private var borderOffsetY:Number;
 		
 		private var _cartPos:Point = new Point();
 		private var _node:Point = new Point();
+		private var _nodePrevious:Point = _node.clone();
 		
 		private var _path:Array = new Array();
 		private var destination:Point = new Point();
-		private var stepsTillTurn:uint = 5;
-		private var stepsTaken:uint;
+		//private var stepsTillTurn:uint = 5;
+		//private var stepsTaken:uint;
 		
 		private var speed:Number;
 		private var _halfSize:Number;
@@ -32,7 +35,7 @@ package dorkbots.dorkbots_iso.entity
 		private var _dX:Number = 0;
 		private var _dY:Number = 0;
 		private var idle:Boolean = true;
-		private var _facingNext:String = "south";;
+		private var _facingNext:String = "south";
 		private var _facingCurrent:String = _facingNext;
 		
 		private var _moved:Boolean = true;
@@ -41,6 +44,17 @@ package dorkbots.dorkbots_iso.entity
 		
 		public function Entity()
 		{
+		}
+
+		public final function get finalDestination():Point
+		{
+			if (_path.length == 0) return null;
+			return _path[0].clone();
+		}
+		
+		public final function get type():uint
+		{
+			return _type;
 		}
 		
 		public final function get dY():Number
@@ -85,9 +99,16 @@ package dorkbots.dorkbots_iso.entity
 		
 		public function set node(value:Point):void
 		{
+			if (!_node.equals(value)) _nodePrevious = _node;
 			_node = value;
 		}
 		
+		public final function get nodePrevious():Point
+		{
+			return _nodePrevious;
+		}
+		
+		// the x and y values of the grid project in 2d. This is used for more optimized calculations when finding position of node and comparison
 		public final function get cartPos():Point
 		{
 			return _cartPos;
@@ -103,12 +124,12 @@ package dorkbots.dorkbots_iso.entity
 			return _entity_mc;
 		}
 		
-		public final function get facingNexy():String
+		public final function get facingNext():String
 		{
 			return _facingNext;
 		}
 		
-		public final function set facingNexy(value:String):void
+		public final function set facingNext(value:String):void
 		{
 			_facingNext = value;
 		}
@@ -123,7 +144,7 @@ package dorkbots.dorkbots_iso.entity
 			_facingCurrent = value;
 		}
 		
-		public function init(a_mc:MovieClip, aSpeed:Number, aHalfSize:Number, aRoomData:IIsoRoomData):IEntity
+		public function init(a_mc:MovieClip, aSpeed:Number, aHalfSize:Number, aRoomData:IIsoRoomData, aType:uint):IEntity
 		{
 			_path.length = 0;
 			_entity_mc = a_mc;
@@ -134,15 +155,14 @@ package dorkbots.dorkbots_iso.entity
 			borderOffsetX = roomData.borderOffsetX;
 			borderOffsetY = roomData.borderOffsetY;
 			
-			stepsTillTurn = Math.floor((roomData.nodeWidth / 2) / speed);
+			_type = aType;
 			
 			return this;
 		}
 		
-		public function dispose():void
+		override public function dispose():void
 		{
 			roomData = null;
-			cornerPoint = null;
 			_cartPos = null;
 			_node = null;
 			_path.length = 0;
@@ -150,18 +170,17 @@ package dorkbots.dorkbots_iso.entity
 			destination = null;
 			_movedAmountPoint = null;
 			_entity_mc = null;
+			
+			super.dispose();
 		}
 		
-		public final function loop(aCornerPoint:Point):void
+		public final function loop():void
 		{
-			cornerPoint = aCornerPoint;
 			aiWalk();
 		}
 		
 		public final function move():void
-		{
-			_node = IsoHelper.getNodeCoordinates(_cartPos, roomData.nodeWidth);
-			
+		{			
 			_moved = false;
 			if (dY == 0 && dX == 0)
 			{
@@ -179,10 +198,22 @@ package dorkbots.dorkbots_iso.entity
 			{
 				_movedAmountPoint.x = speed * dX;
 				_movedAmountPoint.y = speed * dY;
-				_cartPos.x +=  _movedAmountPoint.x;
-				_cartPos.y +=  _movedAmountPoint.y;
+				_cartPos.x += _movedAmountPoint.x;
+				_cartPos.y += _movedAmountPoint.y;
 				
 				_moved = true;
+			} 
+			else if(path.length > 0)
+			{
+				// put the entity in the middle of the node
+				putEntityInMiddleOfNode();
+			}
+			
+			var currentNode:Point = IsoHelper.getNodeCoordinates(_cartPos, roomData.nodeWidth);
+			if (!currentNode.equals(_node))
+			{
+				_nodePrevious = _node;
+				_node = currentNode;
 			}
 		}
 		
@@ -235,7 +266,7 @@ package dorkbots.dorkbots_iso.entity
 			
 			if (newPos.y < roomData.roomNodeGridHeight && newPos.x < roomData.roomNodeGridWidth && newPos.y >= 0 && newPos.x >= 0)
 			{
-				if(roomData.roomWalkable[newPos.y][newPos.x] == 1)
+				if(this.getWalkable()[newPos.y][newPos.x] > 0)
 				{
 					return false;
 				}
@@ -265,34 +296,24 @@ package dorkbots.dorkbots_iso.entity
 			}
 			
 			if( _node.equals(destination) )
-			{
-				//reached current destination, set new, change direction
-				//wait till we are few steps into the tile before we turn
-				stepsTaken++;
-				if(stepsTaken < stepsTillTurn)
+			{	
+				var newPos:Point = new Point(_node.x * roomData.nodeWidth + (roomData.nodeWidth / 2), _node.y * roomData.nodeWidth + (roomData.nodeWidth / 2));
+				if (Point.distance(newPos, cartPos) <= speed)
 				{
-					return;
+					destination = _path.pop();
+					getMovement();
+					
+					putEntityInMiddleOfNode();
 				}
-				
-				//place the hero at tile middle before turn
-				var pos:Point = new Point();
-				
-				pos.x = _node.x * roomData.nodeWidth + (roomData.nodeWidth / 2) + cornerPoint.x;
-				pos.y = _node.y * roomData.nodeWidth + (roomData.nodeWidth / 2) + cornerPoint.y;
-				
-				pos = IsoHelper.twoDToIso(pos);
-				
-				_entity_mc.x = borderOffsetX + pos.x;
-				_entity_mc.y = borderOffsetY + pos.y;
-				
-				_cartPos.x = _node.x * roomData.nodeWidth + roomData.nodeWidth / 2;
-				_cartPos.y = _node.y * roomData.nodeWidth + roomData.nodeWidth / 2;
-				
-				//new point, turn, find dX,dY
-				stepsTaken = 0;
-				destination = _path.pop();
-				getMovement();
 			}
+		}
+		
+		private function putEntityInMiddleOfNode():void
+		{
+			_cartPos.x = _node.x * roomData.nodeWidth + (roomData.nodeWidth / 2);
+			_cartPos.y = _node.y * roomData.nodeWidth + (roomData.nodeWidth / 2);
+			
+			this.broadcasterManager.broadcastEvent( PATH_ARRIVED_NEXT_NODE );
 		}
 		
 		private function getMovement():void
@@ -387,14 +408,19 @@ package dorkbots.dorkbots_iso.entity
 		
 		public final function findPathToNode(nodePoint:Point):void
 		{
-			stepsTaken = 0;
-			destination = _node;
-			_path = PathFinder.go( _node.x, _node.y, nodePoint.x, nodePoint.y, roomData.roomWalkable );
+			//destination = _node;
+			_path = PathFinder.go( _node.x, _node.y, nodePoint.x, nodePoint.y, getWalkable() );
 			path.reverse();
 			path.push(nodePoint);
 			path.reverse();
+			destination = path.pop();
 			
 			getMovement();
+		}
+		
+		protected function getWalkable():Array
+		{
+			return roomData.roomWalkable;
 		}
 	}
 }

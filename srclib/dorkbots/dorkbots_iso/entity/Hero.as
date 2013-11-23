@@ -1,5 +1,7 @@
 package dorkbots.dorkbots_iso.entity
 {
+	import flash.geom.Point;
+
 	public class Hero extends Entity implements IHero
 	{		
 		/*
