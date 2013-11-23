@@ -18,6 +18,8 @@ package dorkbots.dorkbots_iso.room
 		function createEnemy(type:uint):MovieClip;
 		function get enemies():Vector.<IEnemy>;
 		function set enemies(value:Vector.<IEnemy>):void;
+		function get enemiesWalkable():Array;
+		function set enemiesWalkable(value:Array):void;
 		function get borderOffsetX():uint;
 		function get borderOffsetY():uint;
 		function get nodeWidth():uint;

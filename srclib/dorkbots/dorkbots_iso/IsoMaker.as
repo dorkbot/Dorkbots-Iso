@@ -39,6 +39,8 @@ package dorkbots.dorkbots_iso
 		//Senocular KeyObject Class
 		private var key:KeyObject;
 		
+		private var underKeyBoardControl:Boolean = false;
+		
 		private var roomsManager:IIsoRoomsManager;
 		private var roomData:IIsoRoomData;
 		
@@ -80,7 +82,7 @@ package dorkbots.dorkbots_iso
 		{
 			container_mc.removeEventListener(Event.ADDED_TO_STAGE, containerAddedToStage);
 			key = new KeyObject(container_mc.stage);
-			container_mc.addEventListener(MouseEvent.CLICK, handleMouseClick);
+			container_mc.addEventListener(MouseEvent.CLICK, handleClick);
 		}
 		
 		override public function dispose():void
@@ -89,7 +91,7 @@ package dorkbots.dorkbots_iso
 			key.deconstruct();
 			roomsManager.dispose();
 			roomData = null;
-			container_mc.removeEventListener(MouseEvent.CLICK, handleMouseClick);
+			container_mc.removeEventListener(MouseEvent.CLICK, handleClick);
 			container_mc = null;
 			
 			super.dispose();
@@ -182,7 +184,7 @@ package dorkbots.dorkbots_iso
 						// makes sure hero is positioned in the center of the screen
 						placeEntity(hero, j, i, tileType);
 						
-						viewPortcornerPoint.x -= (hero.cartPos.x - (roomData.viewWidth / 2));
+						viewPortcornerPoint.x -= (hero.cartPos.x - (roomData.viewWidth / 2)) + hero.entity_mc.width;
 						viewPortcornerPoint.y -= hero.cartPos.y - (roomData.viewHeight / 2);
 						
 						var pos:Point = hero.cartPos.clone();
@@ -198,6 +200,8 @@ package dorkbots.dorkbots_iso
 					}
 				}
 			}
+			
+			createEnemiesWalkable();
 			
 			for (i = 0; i < enemies.length; i++)
 			{
@@ -218,6 +222,32 @@ package dorkbots.dorkbots_iso
 			
 			entity.node.x = x;
 			entity.node.y = y;
+		}
+		
+		private function createEnemiesWalkable():void
+		{
+			// create enemy walkable array
+			var newWalkable:Array = new Array();
+			
+			var i:int;
+			var enemy:IEnemy;
+			
+			for (i = 0; i < roomData.roomNodeGridHeight; i++)
+			{
+				newWalkable[i] = new Array();
+				for (var j:uint = 0; j < roomData.roomNodeGridWidth; j++)
+				{
+					newWalkable[i][j] = roomData.roomWalkable[i][j];
+				}
+			}
+			
+			for (i = 0; i < roomData.enemies.length; i++) 
+			{
+				enemy = roomData.enemies[i];
+				newWalkable[enemy.node.y][enemy.node.x] = 1;
+			}
+			
+			roomData.enemiesWalkable = newWalkable;
 		}
 		
 		//sort depth & draw to canvas
@@ -308,6 +338,7 @@ package dorkbots.dorkbots_iso
 		{
 			var movement:Boolean = false;
 			
+			// Move and update hero
 			hero.loop();
 			
 			keyBoardControl();
@@ -325,12 +356,20 @@ package dorkbots.dorkbots_iso
 				}
 			}
 			
+			// move enemies
+			createEnemiesWalkable();
+			
+			var i:int;
 			var enemy:IEnemy;
-			for (var i:int = 0; i < enemies.length; i++) 
+			
+			// update enemies
+			for (i = 0; i < enemies.length; i++) 
 			{
 				enemy = enemies[i];
+				roomData.enemiesWalkable[enemy.node.y][enemy.node.x] = 0;
 				enemy.loop();
 				enemy.move();
+				roomData.enemiesWalkable[enemy.node.y][enemy.node.x] = enemy.type;
 				
 				// if enemy has stopped hunting, set a new path for the hero
 				if (!enemy.finalDestination && !enemy.node.equals(hero.node) )
@@ -454,6 +493,11 @@ package dorkbots.dorkbots_iso
 			enemies.length = 0;
 		}
 		
+		
+		/**
+		 * HERO STUFF
+		 */
+		
 		/**
 		 * Pickups
 		 */
@@ -482,19 +526,19 @@ package dorkbots.dorkbots_iso
 		 */
 		private function keyBoardControl():void
 		{
-			var keyControlled:Boolean = false;
+			var keyBoardControl:Boolean = false;
 			var pathFinding:Boolean = false;
 			if (hero.path.length > 0) pathFinding = true;
 			
 			if (key.isDown( Keyboard.UP ))
 			{
 				hero.dY = -1;
-				keyControlled = true;
+				keyBoardControl = true;
 			}
 			else if (key.isDown( Keyboard.DOWN ))
 			{
 				hero.dY = 1;
-				keyControlled = true;
+				keyBoardControl = true;
 			}
 			else
 			{
@@ -519,7 +563,7 @@ package dorkbots.dorkbots_iso
 					hero.dX = 0.5;
 					hero.dY =- 0.5;
 				}
-				keyControlled = true;
+				keyBoardControl = true;
 			}
 			else if (key.isDown( Keyboard.LEFT ))
 			{
@@ -539,7 +583,7 @@ package dorkbots.dorkbots_iso
 					hero.facingNext = "northwest";
 					hero.dX = hero.dY =- 0.5;
 				}
-				keyControlled = true;
+				keyBoardControl = true;
 			}
 			else
 			{
@@ -561,18 +605,20 @@ package dorkbots.dorkbots_iso
 				}
 			}
 			
-			if (keyControlled)
+			if (keyBoardControl)
 			{
 				//key board control active. Stop pathfinding
 				hero.path.length = 0;
 				//hero.moved = true;
+				underKeyBoardControl = true;
 			}
 		}
 		
-		private function handleMouseClick(e:MouseEvent):void
+		/**
+		 * Click Control
+		 */
+		private function handleClick(e:MouseEvent):void
 		{
-			hero.path.length = 0;
-			
 			var clickPt:Point = new Point();
 			
 			clickPt.x = e.stageX - borderOffsetX;
@@ -601,8 +647,20 @@ package dorkbots.dorkbots_iso
 				return;
 			}
 			
+			// if hero was under keyboard control, then first place it in the center of its current node. otherwise the visual position is broken
+			if (underKeyBoardControl)
+			{
+				hero.dX = hero.dY = 0;
+				hero.putEntityInMiddleOfNode();
+				hero.move();
+				viewPortcornerPoint.x -=  hero.movedAmountPoint.x;
+				viewPortcornerPoint.y -=  hero.movedAmountPoint.y;
+				
+				underKeyBoardControl = false;
+			}
+			
 			//trace("{IsoMaker} handleMouseClick -> hero Node = " + hero.node + ", clickPt = " + clickPt);
-			hero.findPathToNode(clickPt);
+			hero.findPathToNode(clickPt, false);
 			
 			// TO DO
 			// display path in Map

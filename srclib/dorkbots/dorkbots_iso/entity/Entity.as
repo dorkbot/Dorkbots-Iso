@@ -20,13 +20,12 @@ package dorkbots.dorkbots_iso.entity
 		private var borderOffsetY:Number;
 		
 		private var _cartPos:Point = new Point();
+		private var cartPosPrevious:Point = new Point();
 		private var _node:Point = new Point();
 		private var _nodePrevious:Point = _node.clone();
 		
 		private var _path:Array = new Array();
 		private var destination:Point = new Point();
-		//private var stepsTillTurn:uint = 5;
-		//private var stepsTaken:uint;
 		
 		private var speed:Number;
 		private var _halfSize:Number;
@@ -176,6 +175,7 @@ package dorkbots.dorkbots_iso.entity
 		
 		public final function loop():void
 		{
+			cartPosPrevious = _cartPos.clone();
 			aiWalk();
 		}
 		
@@ -196,17 +196,15 @@ package dorkbots.dorkbots_iso.entity
 			
 			if (! idle && isWalkable())
 			{
-				_movedAmountPoint.x = speed * dX;
-				_movedAmountPoint.y = speed * dY;
-				_cartPos.x += _movedAmountPoint.x;
-				_cartPos.y += _movedAmountPoint.y;
+				_cartPos.x += speed * dX;
+				_cartPos.y += speed * dY;
 				
 				_moved = true;
 			} 
 			else if(path.length > 0)
 			{
 				// put the entity in the middle of the node
-				putEntityInMiddleOfNode();
+				entityArrivedAtNextNode();
 			}
 			
 			var currentNode:Point = IsoHelper.getNodeCoordinates(_cartPos, roomData.nodeWidth);
@@ -215,6 +213,8 @@ package dorkbots.dorkbots_iso.entity
 				_nodePrevious = _node;
 				_node = currentNode;
 			}
+			
+			_movedAmountPoint = _cartPos.subtract(cartPosPrevious);
 		}
 		
 		private function isWalkable():Boolean
@@ -266,7 +266,7 @@ package dorkbots.dorkbots_iso.entity
 			
 			if (newPos.y < roomData.roomNodeGridHeight && newPos.x < roomData.roomNodeGridWidth && newPos.y >= 0 && newPos.x >= 0)
 			{
-				if(this.getWalkable()[newPos.y][newPos.x] > 0)
+				if(this.getWalkable()[newPos.y][newPos.x] > 0 && !newPos.equals(_node))
 				{
 					return false;
 				}
@@ -303,17 +303,22 @@ package dorkbots.dorkbots_iso.entity
 					destination = _path.pop();
 					getMovement();
 					
-					putEntityInMiddleOfNode();
+					entityArrivedAtNextNode();
 				}
 			}
 		}
 		
-		private function putEntityInMiddleOfNode():void
+		private function entityArrivedAtNextNode():void
+		{
+			putEntityInMiddleOfNode();
+			
+			this.broadcasterManager.broadcastEvent( PATH_ARRIVED_NEXT_NODE );
+		}
+		
+		public final function putEntityInMiddleOfNode():void
 		{
 			_cartPos.x = _node.x * roomData.nodeWidth + (roomData.nodeWidth / 2);
 			_cartPos.y = _node.y * roomData.nodeWidth + (roomData.nodeWidth / 2);
-			
-			this.broadcasterManager.broadcastEvent( PATH_ARRIVED_NEXT_NODE );
 		}
 		
 		private function getMovement():void
@@ -406,16 +411,36 @@ package dorkbots.dorkbots_iso.entity
 			}
 		}
 		
-		public final function findPathToNode(nodePoint:Point):void
+		// Entities need to reach the center of path node before creating a new path. Otherwise visual positioning get's skewed.
+		public final function findPathToNode(nodePoint:Point, updateDestination:Boolean = true):void
 		{
-			//destination = _node;
-			_path = PathFinder.go( _node.x, _node.y, nodePoint.x, nodePoint.y, getWalkable() );
+			var oldPath:Array = _path.slice();
+			var startNode:Point;
+			
+			// used by the IsoMaker click for hero pathfinding. Prevents hero from moving backwards toward pervious node.
+			if (!updateDestination && oldPath.length > 0)
+			{
+				startNode = destination;
+			}
+			else
+			{
+				startNode = _node;
+			}
+			
+			_path = PathFinder.go( startNode.x, startNode.y, nodePoint.x, nodePoint.y, getWalkable() );
 			path.reverse();
 			path.push(nodePoint);
 			path.reverse();
-			destination = path.pop();
 			
-			getMovement();
+			if (updateDestination)
+			{
+				destination = path.pop();
+			}
+			// used by the IsoMaker click for hero pathfinding. 
+			else if (oldPath.length == 0) 
+			{
+				destination = path.pop();
+			}
 		}
 		
 		protected function getWalkable():Array

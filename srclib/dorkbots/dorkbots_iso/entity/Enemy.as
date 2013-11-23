@@ -9,9 +9,11 @@ package dorkbots.dorkbots_iso.entity
 		
 		override protected function getWalkable():Array
 		{
-			var newWalkable:Array = new Array();
+			// create enemy walkable array
+			/*var newWalkable:Array = new Array();
 			
 			var i:int;
+			var enemy:IEnemy;
 			
 			for (i = 0; i < roomData.roomNodeGridHeight; i++)
 			{
@@ -22,17 +24,14 @@ package dorkbots.dorkbots_iso.entity
 				}
 			}
 			
-			var enemy:IEnemy;
 			for (i = 0; i < roomData.enemies.length; i++) 
 			{
 				enemy = roomData.enemies[i];
-				if (enemy != this) 
-				{
-					newWalkable[enemy.node.y][enemy.node.x] = 1;
-				}
+				newWalkable[enemy.node.y][enemy.node.x] = 1;
 			}
 			
-			return newWalkable;
+			return newWalkable;*/
+			return roomData.enemiesWalkable;
 		}
 	}
 }

@@ -30,6 +30,7 @@ package dorkbots.dorkbots_iso.room
 		protected var enemyClass:Class;
 		protected var _enemyHalfSize:uint = 20;
 		private var _enemies:Vector.<IEnemy> = new Vector.<IEnemy>();
+		private var _enemiesWalkable:Array = new Array();
 		
 		//the tiles
 		protected var terrainTileClass:Class;
@@ -130,6 +131,16 @@ package dorkbots.dorkbots_iso.room
 		public final function get enemies():Vector.<IEnemy>
 		{
 			return _enemies;
+		}
+		
+		public final function get enemiesWalkable():Array
+		{
+			return _enemiesWalkable;
+		}
+		
+		public final function set enemiesWalkable(value:Array):void
+		{
+			_enemiesWalkable = value;
 		}
 		
 		public final function get borderOffsetX():uint

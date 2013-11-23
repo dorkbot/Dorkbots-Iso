@@ -30,6 +30,7 @@ package dorkbots.dorkbots_iso.entity
 		function loop():void;
 		function move():void;
 		function get movedAmountPoint():Point;
-		function findPathToNode(nodePoint:Point):void;
+		function findPathToNode(nodePoint:Point, updateDestination:Boolean = true):void;
+		function putEntityInMiddleOfNode():void;
 	}
 }
