@@ -511,13 +511,13 @@ package dorkbots.dorkbots_iso
 				else if (hero.dY == 1)
 				{
 					hero.facingNext = "southeast";
-					hero.dX = hero.dY = 0.75;
+					hero.dX = hero.dY = 0.5;
 				}
 				else
 				{
 					hero.facingNext = "northeast";
-					hero.dX = 0.75;
-					hero.dY =- 0.75;
+					hero.dX = 0.5;
+					hero.dY =- 0.5;
 				}
 				keyControlled = true;
 			}
@@ -531,13 +531,13 @@ package dorkbots.dorkbots_iso
 				else if (hero.dY == 1)
 				{
 					hero.facingNext = "southwest";
-					hero.dY = 0.75;
-					hero.dX =- 0.75;
+					hero.dY = 0.5;
+					hero.dX =- 0.5;
 				}
 				else
 				{
 					hero.facingNext = "northwest";
-					hero.dX = hero.dY =- 0.75;
+					hero.dX = hero.dY =- 0.5;
 				}
 				keyControlled = true;
 			}

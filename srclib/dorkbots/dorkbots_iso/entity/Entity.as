@@ -362,13 +362,13 @@ package dorkbots.dorkbots_iso.entity
 				else if (dY == 1)
 				{
 					_facingNext = "southeast";
-					dX = dY = 0.75;
+					dX = dY = 0.5;
 				}
 				else
 				{
 					_facingNext = "northeast";
-					dX = 0.75;
-					dY = -0.75;
+					dX = 0.5;
+					dY = -0.5;
 				}
 			}
 			else if (dX == -1)
@@ -380,13 +380,13 @@ package dorkbots.dorkbots_iso.entity
 				else if (dY == 1)
 				{
 					_facingNext = "southwest";
-					dY = 0.75;
-					dX = -0.75;
+					dY = 0.5;
+					dX = -0.5;
 				}
 				else
 				{
 					_facingNext= "northwest";
-					dX = dY = -0.75;
+					dX = dY = -0.5;
 				}
 			}
 			else
