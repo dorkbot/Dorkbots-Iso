@@ -12,6 +12,7 @@ package dorkbots.dorkbots_iso.entity
 	public class Entity extends BroadcastingObject implements IEntity
 	{
 		public static const PATH_ARRIVED_NEXT_NODE:String = "path arrived next node";
+		public static const WALKING_ON_NODE_TYPE_OTHER:String = "walking on node type other";
 		
 		protected var roomData:IIsoRoomData;
 		private var _type:uint;
@@ -24,6 +25,7 @@ package dorkbots.dorkbots_iso.entity
 		private var _node:Point = new Point();
 		private var _nodePrevious:Point = _node.clone();
 		
+		protected var walkableList:Vector.<uint>;
 		private var _path:Array = new Array();
 		private var destination:Point = new Point();
 		
@@ -156,6 +158,8 @@ package dorkbots.dorkbots_iso.entity
 			
 			_type = aType;
 			
+			setupWalkableList();
+			
 			return this;
 		}
 		
@@ -194,7 +198,7 @@ package dorkbots.dorkbots_iso.entity
 				_entity_mc.clip.gotoAndPlay(_facingNext);
 			}
 			
-			if (! idle && isWalkable())
+			if (! idle && checkWalkable())
 			{
 				_cartPos.x += speed * dX;
 				_cartPos.y += speed * dY;
@@ -217,7 +221,7 @@ package dorkbots.dorkbots_iso.entity
 			_movedAmountPoint = _cartPos.subtract(cartPosPrevious);
 		}
 		
-		private function isWalkable():Boolean
+		private function checkWalkable():Boolean
 		{
 			var newPos:Point = new Point();
 			newPos.x = _cartPos.x + (speed * dX);
@@ -266,12 +270,17 @@ package dorkbots.dorkbots_iso.entity
 			
 			if (newPos.y < roomData.roomNodeGridHeight && newPos.x < roomData.roomNodeGridWidth && newPos.y >= 0 && newPos.x >= 0)
 			{
-				if(this.getWalkable()[newPos.y][newPos.x] > 0 && !newPos.equals(_node))
+				var nodeType:uint = getWalkable()[newPos.y][newPos.x];
+				if(!isWalkable(nodeType))
 				{
 					return false;
 				}
 				else
 				{
+					if (nodeType > 1)
+					{
+						this.broadcasterManager.broadcastEvent( WALKING_ON_NODE_TYPE_OTHER, {nodeType: nodeType} );
+					}
 					return true;
 				}
 			}
@@ -295,7 +304,11 @@ package dorkbots.dorkbots_iso.entity
 				return;
 			}
 			
-			if( _node.equals(destination) )
+			if ( !isWalkable( getWalkable()[_node.y][_node.x] ) )
+			{
+				destination = _nodePrevious;
+			}
+			else if( _node.equals(destination))
 			{	
 				var newPos:Point = new Point(_node.x * roomData.nodeWidth + (roomData.nodeWidth / 2), _node.y * roomData.nodeWidth + (roomData.nodeWidth / 2));
 				if (Point.distance(newPos, cartPos) <= speed)
@@ -427,7 +440,7 @@ package dorkbots.dorkbots_iso.entity
 				startNode = _node;
 			}
 			
-			_path = PathFinder.go( startNode.x, startNode.y, nodePoint.x, nodePoint.y, getWalkable() );
+			_path = PathFinder.go( startNode.x, startNode.y, nodePoint.x, nodePoint.y, getWalkable(), walkableList );
 			path.reverse();
 			path.push(nodePoint);
 			path.reverse();
@@ -441,6 +454,20 @@ package dorkbots.dorkbots_iso.entity
 			{
 				destination = path.pop();
 			}
+		}
+		
+		protected function setupWalkableList():void
+		{
+			
+		}
+		
+		public final function isWalkable(num:uint):Boolean
+		{
+			if (num == 0) return true;
+			
+			if (walkableList) if (walkableList.indexOf(num) > -1) return true;
+			
+			return false;
 		}
 		
 		protected function getWalkable():Array

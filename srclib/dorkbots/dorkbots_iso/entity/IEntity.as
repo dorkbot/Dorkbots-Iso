@@ -32,5 +32,6 @@ package dorkbots.dorkbots_iso.entity
 		function get movedAmountPoint():Point;
 		function findPathToNode(nodePoint:Point, updateDestination:Boolean = true):void;
 		function putEntityInMiddleOfNode():void;
+		function isWalkable(num:uint):Boolean;
 	}
 }

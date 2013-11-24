@@ -8,7 +8,7 @@ package dorkbots.dorkbots_iso.room
 	{
 		protected var _roomWalkable:Array;
 		protected var _roomPickups:Array;
-		protected var _roomTerrain:Array;
+		protected var _roomTileArt:Array;
 		protected var _roomTriggers:Array;
 		protected var _roomEntities:Array;
 		
@@ -33,10 +33,10 @@ package dorkbots.dorkbots_iso.room
 		private var _enemiesWalkable:Array = new Array();
 		
 		//the tiles
-		protected var terrainTileClass:Class;
-		private var _terrainTile:MovieClip;
-		protected var pickupTileClass:Class;
-		private var _pickupTile:MovieClip;
+		protected var tileArtClass:Class;
+		private var _tileArt:MovieClip;
+		protected var tilePickupClass:Class;
+		private var _tilePickup:MovieClip;
 		
 		//to handle direction movement
 		protected var _speed:uint = 6;
@@ -55,15 +55,15 @@ package dorkbots.dorkbots_iso.room
 		public final function stasis():void
 		{
 			_hero = null;
-			_terrainTile = null;
+			_tileArt = null;
 		}
 		
 		public final function dispose():void
 		{
 			_roomWalkable.length = 0;
 			_roomWalkable = null;
-			_roomTerrain.length = 0;
-			_roomTerrain = null;
+			_roomTileArt.length = 0;
+			_roomTileArt = null;
 			_roomTriggers.length = 0;
 			_roomTriggers = null;
 			_roomPickups.length = 0;
@@ -74,8 +74,8 @@ package dorkbots.dorkbots_iso.room
 			heroClass = null;
 			enemyClass = null;
 			_enemies.length = 0;
-			terrainTileClass = null;
-			pickupTileClass = null;
+			tileArtClass = null;
+			tilePickupClass = null;
 			
 			stasis();
 		}
@@ -90,16 +90,16 @@ package dorkbots.dorkbots_iso.room
 			return _speed;
 		}
 
-		public final function get terrainTile():MovieClip
+		public final function get tileArt():MovieClip
 		{
-			if (_terrainTile == null) _terrainTile = new terrainTileClass();
-			return _terrainTile;
+			if (_tileArt == null) _tileArt = new tileArtClass();
+			return _tileArt;
 		}
 
-		public final function get pickupTile():MovieClip
+		public final function get tilePickup():MovieClip
 		{
-			if (_pickupTile == null) _pickupTile = new pickupTileClass();
-			return _pickupTile;
+			if (_tilePickup == null) _tilePickup = new tilePickupClass();
+			return _tilePickup;
 		}
 		
 		public final function get hero():MovieClip
@@ -183,9 +183,9 @@ package dorkbots.dorkbots_iso.room
 			return _roomWalkable;
 		}
 		
-		public final function get roomTerrain():Array
+		public final function get roomTileArt():Array
 		{
-			return _roomTerrain;
+			return _roomTileArt;
 		}
 		
 		public final function get roomTriggers():Array

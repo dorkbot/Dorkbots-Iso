@@ -11,8 +11,8 @@ package rooms
 			
 			heroClass = Hero_MC;
 			enemyClass = Enemy_MC;
-			terrainTileClass = TerrainTile_MC;
-			pickupTileClass = PickupTile_MC;
+			tileArtClass = TerrainTile_MC;
+			tilePickupClass = PickupTile_MC;
 		}
 	}
 }

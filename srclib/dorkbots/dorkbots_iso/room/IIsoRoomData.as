@@ -10,8 +10,8 @@ package dorkbots.dorkbots_iso.room
 		function dispose():void;
 		function get heroFacing():String;
 		function get speed():uint;
-		function get terrainTile():MovieClip;
-		function get pickupTile():MovieClip;
+		function get tileArt():MovieClip;
+		function get tilePickup():MovieClip;
 		function get heroHalfSize():uint;
 		function get hero():MovieClip;
 		function get enemyHalfSize():uint;
@@ -29,7 +29,7 @@ package dorkbots.dorkbots_iso.room
 		function get roomNodeGridWidth():uint;
 		function init():void;
 		function get roomWalkable():Array;
-		function get roomTerrain():Array;
+		function get roomTileArt():Array;
 		function get roomTriggers():Array;
 		function get roomPickups():Array;
 		function get roomEntities():Array;

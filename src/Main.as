@@ -1,15 +1,14 @@
 package
 {
-	import dorkbots.dorkbots_iso.IIsoMaker;
-	import dorkbots.dorkbots_iso.room.IIsoRoomsManager;
-	import dorkbots.dorkbots_iso.IsoEvents;
-	import dorkbots.dorkbots_iso.IsoMaker;
-	import dorkbots.dorkbots_iso.room.IsoRoomsManager;
-	
 	import flash.display.Sprite;
 	import flash.events.Event;
 	
 	import dorkbots.dorkbots_broadcasters.IBroadcastedEvent;
+	import dorkbots.dorkbots_iso.IIsoMaker;
+	import dorkbots.dorkbots_iso.IsoMaker;
+	import dorkbots.dorkbots_iso.entity.Entity;
+	import dorkbots.dorkbots_iso.room.IIsoRoomsManager;
+	import dorkbots.dorkbots_iso.room.IsoRoomsManager;
 	
 	import rooms.Room1Data;
 	import rooms.Room2Data;
@@ -33,9 +32,11 @@ package
 			addChild(isoContainer);
 			
 			isoMaker = new IsoMaker( isoContainer, roomsManager );
-			isoMaker.addEventListener( IsoEvents.ROOM_CHANGE, roomChange );
-			isoMaker.addEventListener( IsoEvents.PICKUP_COLLECTED, pickupCollected );
+			isoMaker.addEventListener( IsoMaker.ROOM_CHANGE, roomChange );
+			isoMaker.addEventListener( IsoMaker.PICKUP_COLLECTED, pickupCollected );
 			isoMaker.start();
+			
+			isoMaker.hero.addEventListener( Entity.WALKING_ON_NODE_TYPE_OTHER, heroWalkingOnNodeTypeOther );
 			
 			addEventListener(Event.ENTER_FRAME, loop);
 		}
@@ -47,14 +48,18 @@ package
 		
 		private function roomChange(event:IBroadcastedEvent):void
 		{
-			trace("{Main} roomChange");
+			trace("{Main} roomChange -> roomNumber = " + event.object.roomNumber);
 		}
 		
 		private function pickupCollected(event:IBroadcastedEvent):void
 		{
 			trace("{Main} pickupCollected -> type = " + event.object.type);
-			
-			
+		}
+		
+		
+		private function heroWalkingOnNodeTypeOther(event:IBroadcastedEvent):void
+		{
+			trace("{Main} heroWalkingOnNodeTypeOther -> type = " + event.object.nodeType);
 		}
 	}
 }
