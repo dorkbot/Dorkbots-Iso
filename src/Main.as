@@ -56,7 +56,8 @@ package
 			trace("{Main} pickupCollected -> type = " + event.object.type);
 		}
 		
-		
+		// you can use this for adding damage or adding health (in the future, no health or damage yet). Also can create a safe zone from enemies.
+		// use the setupWalkableList() method in the entity class, polymorph it. Look at the Hero class.
 		private function heroWalkingOnNodeTypeOther(event:IBroadcastedEvent):void
 		{
 			trace("{Main} heroWalkingOnNodeTypeOther -> type = " + event.object.nodeType);
