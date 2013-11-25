@@ -1,4 +1,4 @@
-package dorkbots.dorkbots_iso
+package dorkbots.dorkbots_iso.map
 {
 	import com.csharks.juwalbose.IsoHelper;
 	
