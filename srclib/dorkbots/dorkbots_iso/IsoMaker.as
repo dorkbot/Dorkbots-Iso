@@ -53,6 +53,8 @@ package dorkbots.dorkbots_iso
 		
 		private var _hero:IHero;
 		private var enemies:Vector.<IEnemy> = new Vector.<IEnemy>();
+		private var _enemyTargetNode:Point;
+		private var _enemiesSeekHero:Boolean = true;
 		
 		public function IsoMaker(aContainer_mc:DisplayObjectContainer, aRoomsManager:IIsoRoomsManager)
 		{
@@ -80,7 +82,7 @@ package dorkbots.dorkbots_iso
 				container_mc.addEventListener(Event.ADDED_TO_STAGE, containerAddedToStage);
 			}
 		}
-		
+
 		private function containerAddedToStage(event:Event = null):void
 		{
 			container_mc.removeEventListener(Event.ADDED_TO_STAGE, containerAddedToStage);
@@ -98,6 +100,26 @@ package dorkbots.dorkbots_iso
 			container_mc = null;
 			
 			super.dispose();
+		}
+		
+		public final function get enemiesSeekHero():Boolean
+		{
+			return _enemiesSeekHero;
+		}
+		
+		public final function set enemiesSeekHero(value:Boolean):void
+		{
+			_enemiesSeekHero = value;
+		}
+		
+		public final function get enemyTargetNode():Point
+		{
+			return _enemyTargetNode;
+		}
+		
+		public final function set enemyTargetNode(value:Point):void
+		{
+			_enemyTargetNode = value;
 		}
 		
 		public final function get hero():IHero
@@ -202,16 +224,19 @@ package dorkbots.dorkbots_iso
 						buildHero = false;
 						
 						//break toploop;
-					}				}
+					}				
+				}
 			}
 			
 			updateEnemiesWalkable();
-			
-			for (i = 0; i < enemies.length; i++)
+			if (_enemiesSeekHero) _enemyTargetNode = _hero.node;
+			if (_enemyTargetNode)
 			{
-				enemies[i].findPathToNode(_hero.node);
+				for (i = 0; i < enemies.length; i++)
+				{
+					enemies[i].findPathToNode(_enemyTargetNode);
+				}
 			}
-			
 			roomData.enemies = enemies;
 			
 			//trace("enemies = " + enemies.length);
@@ -345,6 +370,8 @@ package dorkbots.dorkbots_iso
 				}
 			}
 			
+			if (_enemiesSeekHero) _enemyTargetNode = hero.node;
+			
 			// move enemies
 			updateEnemiesWalkable();
 			
@@ -361,9 +388,9 @@ package dorkbots.dorkbots_iso
 				roomData.enemiesWalkable[enemy.node.y][enemy.node.x] = enemy.type;
 				
 				// if enemy has stopped hunting, set a new path for the hero
-				if (!enemy.finalDestination && !enemy.node.equals(_hero.node) )
+				if (!enemy.finalDestination && !enemy.node.equals(_enemyTargetNode) )
 				{
-					enemy.findPathToNode(_hero.node);
+					if (_enemyTargetNode) enemy.findPathToNode(_enemyTargetNode);
 				}
 				
 				if (enemy.moved)
@@ -451,14 +478,14 @@ package dorkbots.dorkbots_iso
 			var enemy:IEnemy = IEnemy(event.owner);
 			if (enemy.finalDestination)
 			{
-				if(!enemy.finalDestination.equals(_hero.node)) 
+				if(!enemy.finalDestination.equals(_enemyTargetNode)) 
 				{
-					enemy.findPathToNode(_hero.node);
+					enemy.findPathToNode(_enemyTargetNode);
 				}
 			}
 			else
 			{
-				if ( !enemy.node.equals(_hero.node) ) enemy.findPathToNode(_hero.node);
+				if ( !enemy.node.equals(_enemyTargetNode) ) enemy.findPathToNode(_enemyTargetNode);
 			}
 		}
 		

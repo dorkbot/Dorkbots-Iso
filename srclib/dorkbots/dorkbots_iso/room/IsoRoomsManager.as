@@ -40,6 +40,11 @@ package dorkbots.dorkbots_iso.room
 			return _roomCurrentNum;
 		}
 		
+		public final function get roomCurrent():IIsoRoomData
+		{
+			return getRoom(_roomCurrentNum);
+		}
+		
 		public final function putRoomInStasis(roomData:IIsoRoomData):void
 		{
 			roomData.stasis();

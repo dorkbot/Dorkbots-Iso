@@ -7,6 +7,7 @@ package dorkbots.dorkbots_iso.room
 		function get roomLastNum():uint;
 		function set roomCurrentNum(value:uint):void;
 		function get roomCurrentNum():uint;
+		function get roomCurrent():IIsoRoomData;
 		function addRoom(level:Class):void;
 		function getRoom(levelNum:uint):IIsoRoomData;
 		function putRoomInStasis(roomData:IIsoRoomData):void;

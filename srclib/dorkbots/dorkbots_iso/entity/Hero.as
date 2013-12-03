@@ -15,6 +15,8 @@ package dorkbots.dorkbots_iso.entity
 		{
 			walkableList = new Vector.<uint>();
 			walkableList.push(2);
+			walkableList.push(3);
+			walkableList.push(4);
 		}
 	}
 }

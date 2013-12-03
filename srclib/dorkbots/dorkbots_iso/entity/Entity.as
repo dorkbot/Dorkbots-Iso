@@ -13,6 +13,7 @@ package dorkbots.dorkbots_iso.entity
 	{
 		public static const PATH_ARRIVED_NEXT_NODE:String = "path arrived next node";
 		public static const WALKING_ON_NODE_TYPE_OTHER:String = "walking on node type other";
+		public static const NEW_NODE:String = "new node";
 		
 		protected var roomData:IIsoRoomData;
 		private var _type:uint;
@@ -216,6 +217,7 @@ package dorkbots.dorkbots_iso.entity
 			{
 				_nodePrevious = _node;
 				_node = currentNode;
+				broadcasterManager.broadcastEvent( NEW_NODE , {node: _node} );
 			}
 			
 			_movedAmountPoint = _cartPos.subtract(cartPosPrevious);
