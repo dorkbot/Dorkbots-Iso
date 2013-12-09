@@ -17,9 +17,11 @@ package dorkbots.dorkbots_iso
 	import dorkbots.dorkbots_broadcasters.IBroadcastedEvent;
 	import dorkbots.dorkbots_iso.entity.Enemy;
 	import dorkbots.dorkbots_iso.entity.Entity;
+	import dorkbots.dorkbots_iso.entity.EntityFactory;
 	import dorkbots.dorkbots_iso.entity.Hero;
 	import dorkbots.dorkbots_iso.entity.IEnemy;
 	import dorkbots.dorkbots_iso.entity.IEntity;
+	import dorkbots.dorkbots_iso.entity.IEntityFactory;
 	import dorkbots.dorkbots_iso.entity.IHero;
 	import dorkbots.dorkbots_iso.room.IIsoRoomData;
 	import dorkbots.dorkbots_iso.room.IIsoRoomsManager;
@@ -29,6 +31,7 @@ package dorkbots.dorkbots_iso
 	{
 		public static const ROOM_CHANGE:String = "room change";
 		public static const PICKUP_COLLECTED:String = "pickup collected";
+		public static const HERO_SHARING_NODE_WITH_ENEMY:String = "hero sharing node with enemy";
 		
 		//the canvas
 		private var _canvas:Bitmap;
@@ -46,6 +49,7 @@ package dorkbots.dorkbots_iso
 		
 		private var roomsManager:IIsoRoomsManager;
 		private var roomData:IIsoRoomData;
+		private var entityFactory:IEntityFactory;
 		
 		private var container_mc:DisplayObjectContainer;
 		
@@ -56,7 +60,7 @@ package dorkbots.dorkbots_iso
 		private var _enemyTargetNode:Point;
 		private var _enemiesSeekHero:Boolean = true;
 		
-		public function IsoMaker(aContainer_mc:DisplayObjectContainer, aRoomsManager:IIsoRoomsManager)
+		public function IsoMaker(aContainer_mc:DisplayObjectContainer, aRoomsManager:IIsoRoomsManager, aEntityFactory:IEntityFactory = null)
 		{
 			/*
 			TO DO
@@ -72,6 +76,9 @@ package dorkbots.dorkbots_iso
 			*/
 			container_mc = aContainer_mc;
 			roomsManager = aRoomsManager;
+			entityFactory = aEntityFactory;
+			
+			if (!entityFactory) entityFactory = new EntityFactory();
 			
 			if (container_mc.stage)
 			{
@@ -98,8 +105,19 @@ package dorkbots.dorkbots_iso
 			roomData = null;
 			container_mc.removeEventListener(MouseEvent.CLICK, handleClick);
 			container_mc = null;
+			entityFactory.dispose();
+			entityFactory = null;
 			
 			super.dispose();
+		}
+		
+		public final function enemyDestroy(enemy:IEnemy):void
+		{
+			// TO DO
+			// move enemies array to roomData, so enemies can keep their health when the hero leaves the room
+			// remove enemy from the array
+			// 0 enemies entity node in the roomData
+			// call destroy
 		}
 		
 		public final function get enemiesSeekHero():Boolean
@@ -144,7 +162,7 @@ package dorkbots.dorkbots_iso
 			
 			if (!_hero)
 			{
-				_hero = new Hero();
+				_hero = entityFactory.createHero();
 			}
 			
 			_hero.init(roomData.hero, roomData.speed, roomData.heroHalfSize, roomData, 1);
@@ -154,7 +172,7 @@ package dorkbots.dorkbots_iso
 			
 			_canvas = new Bitmap( new BitmapData( roomData.viewWidth, roomData.viewHeight ) );
 			rect = _canvas.bitmapData.rect;
-			RemoveDisplayObjects.removeDisplayObjects(container_mc);
+			RemoveDisplayObjects.removeAllDisplayObjects(container_mc);
 			container_mc.addChild(_canvas);
 			
 			_hero.facingCurrent = "";
@@ -199,7 +217,7 @@ package dorkbots.dorkbots_iso
 					if (tileType > 1)
 					{
 						//trace("found enemy j = " + j + ", i = " + i);
-						enemy = new Enemy();
+						enemy = entityFactory.createEnemy(tileType);
 						enemy.addEventListener( Entity.PATH_ARRIVED_NEXT_NODE, enemyArrivedAtNextPathNode);
 						enemies.push( enemy.init( roomData.createEnemy(tileType), roomData.speed, roomData.enemyHalfSize, roomData, tileType ) );
 
@@ -401,7 +419,7 @@ package dorkbots.dorkbots_iso
 				
 				if (enemy.node.equals(_hero.node))
 				{
-					//trace("hero and enemy share same node!!!");
+					broadcasterManager.broadcastEvent( HERO_SHARING_NODE_WITH_ENEMY, {enemy: enemy} );
 				}
 			}
 			

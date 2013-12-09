@@ -11,6 +11,10 @@ package dorkbots.dorkbots_iso.entity
 		function init(a_mc:MovieClip, aSpeed:Number, aHalfSize:Number, aRoomData:IIsoRoomData, aType:uint):IEntity;
 		function get type():uint;
 		function get finalDestination():Point;
+		function get health():Number;
+		function set health(value:Number):void;
+		function get healthMax():uint;
+		function set healthMax(value:uint):void;
 		function get dY():Number;
 		function set dY(value:Number):void;
 		function get dX():Number;

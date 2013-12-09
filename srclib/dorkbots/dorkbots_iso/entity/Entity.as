@@ -34,6 +34,8 @@ package dorkbots.dorkbots_iso.entity
 		private var _halfSize:Number;
 		private var _movedAmountPoint:Point = new Point();
 		
+		protected var _healthMax:uint = 100;
+		private var _health:Number = _healthMax;
 		private var _dX:Number = 0;
 		private var _dY:Number = 0;
 		private var idle:Boolean = true;
@@ -57,6 +59,26 @@ package dorkbots.dorkbots_iso.entity
 		public final function get type():uint
 		{
 			return _type;
+		}
+		
+		public final function get health():Number
+		{
+			return _health;
+		}
+		
+		public final function set health(value:Number):void
+		{
+			_health = value;
+		}
+		
+		public final function get healthMax():uint
+		{
+			return _healthMax;
+		}
+		
+		public final function set healthMax(value:uint):void
+		{
+			_healthMax = value;
 		}
 		
 		public final function get dY():Number
@@ -458,6 +480,9 @@ package dorkbots.dorkbots_iso.entity
 			}
 		}
 		
+		// Don't need to add 0. This tells the pathfinder to count other numbers as walkable besides 0.
+		// use this when you want the Enemy to walk on nodes that activate other behaviors, such as lava causing damage.
+		// override this method in your projects Enemy Class to remove or add walkable node types.
 		protected function setupWalkableList():void
 		{
 			

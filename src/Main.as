@@ -11,6 +11,8 @@ package
 	import dorkbots.dorkbots_iso.room.IIsoRoomsManager;
 	import dorkbots.dorkbots_iso.room.IsoRoomsManager;
 	
+	import entities.EntityDorkbotsFactory;
+	
 	import rooms.Room1Data;
 	import rooms.Room2Data;
 	import rooms.Room3Data;
@@ -33,9 +35,10 @@ package
 			var isoContainer:Sprite = new Sprite();
 			addChild(isoContainer);
 			
-			isoMaker = new IsoMaker( isoContainer, roomsManager );
+			isoMaker = new IsoMaker( isoContainer, roomsManager, new EntityDorkbotsFactory());
 			isoMaker.addEventListener( IsoMaker.ROOM_CHANGE, roomChange );
 			isoMaker.addEventListener( IsoMaker.PICKUP_COLLECTED, pickupCollected );
+			isoMaker.addEventListener( IsoMaker.HERO_SHARING_NODE_WITH_ENEMY, heroSharingNodeWithEnemy );
 			isoMaker.start();
 			
 			isoMaker.hero.addEventListener( Entity.WALKING_ON_NODE_TYPE_OTHER, heroWalkingOnNodeTypeOther );
@@ -56,6 +59,11 @@ package
 		private function pickupCollected(event:IBroadcastedEvent):void
 		{
 			trace("{Main} pickupCollected -> type = " + event.object.type);
+		}
+		
+		private function heroSharingNodeWithEnemy(event:IBroadcastedEvent):void
+		{
+			trace("{Main} heroSharingNodeWithEnemy -> enemy = " + event.object.enemy);
 		}
 		
 		// you can use this for adding damage or adding health (in the future, no health or damage yet). Also can create a safe zone from enemies.
