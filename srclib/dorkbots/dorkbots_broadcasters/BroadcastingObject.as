@@ -36,11 +36,16 @@ package dorkbots.dorkbots_broadcasters
 	 */
 	public class BroadcastingObject implements IBroadcastingObject
 	{
-		protected var broadcasterManager:IBroadcasterManager;
+		private var broadcasterManager:IBroadcasterManager;
 		
 		public function BroadcastingObject()
 		{
 			broadcasterManager = new BroadcasterManager(this);
+		}
+		
+		protected final function broadcastEvent(name:String, object:Object = null):void
+		{
+			broadcasterManager.broadcastEvent( name, object );
 		}
 		
 		/**

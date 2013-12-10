@@ -74,12 +74,12 @@ package dorkbots.dorkbots_broadcasters.broadcasters_state
 					statesHistory.push(state);
 				}
 				
-				broadcasterManager.broadcastEvent(state, object);
+				broadcastEvent(state, object);
 				
 				// using a try incase this object has been disposed after the first broadcast/update
 				try 
 				{ 
-					broadcasterManager.broadcastEvent(BroadcasterEvents.STATE_UPDATED, object);
+					broadcastEvent(BroadcasterEvents.STATE_UPDATED, object);
 				} 
 				catch (myError:Error) 
 				{ 

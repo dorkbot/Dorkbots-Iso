@@ -7,6 +7,7 @@ package
 	import dorkbots.dorkbots_broadcasters.IBroadcastedEvent;
 	import dorkbots.dorkbots_iso.IIsoMaker;
 	import dorkbots.dorkbots_iso.IsoMaker;
+	import dorkbots.dorkbots_iso.entity.Enemy;
 	import dorkbots.dorkbots_iso.entity.Entity;
 	import dorkbots.dorkbots_iso.room.IIsoRoomsManager;
 	import dorkbots.dorkbots_iso.room.IsoRoomsManager;
@@ -17,6 +18,7 @@ package
 	import rooms.Room2Data;
 	import rooms.Room3Data;
 	import rooms.Room4Data;
+	import dorkbots.dorkbots_iso.entity.IEnemy;
 	
 	[SWF(width='800', height='600', backgroundColor='#FFFFFF', frameRate='30')]
 	public class Main extends Sprite
@@ -43,6 +45,8 @@ package
 			
 			isoMaker.hero.addEventListener( Entity.WALKING_ON_NODE_TYPE_OTHER, heroWalkingOnNodeTypeOther );
 			
+			setUpEnemies();
+			
 			addEventListener(Event.ENTER_FRAME, loop);
 		}
 		
@@ -54,6 +58,21 @@ package
 		private function roomChange(event:IBroadcastedEvent):void
 		{
 			trace("{Main} roomChange -> roomNumber = " + event.object.roomNumber);
+			setUpEnemies();
+		}
+		
+		private function setUpEnemies():void
+		{
+			for (var i:int = 0; i < roomsManager.roomCurrent.enemies.length; i++) 
+			{
+				trace("ldfkjalfjdslfdjsafjlsadflj");
+				roomsManager.roomCurrent.enemies[i].addEventListener( Entity.PATH_COMPLETE, enemyPathComplete );
+			}
+		}
+		
+		private function enemyPathComplete(event:IBroadcastedEvent):void
+		{
+			trace("{Main} enemyPathComplete -> enemy = " + IEnemy(event.owner) );
 		}
 		
 		private function pickupCollected(event:IBroadcastedEvent):void

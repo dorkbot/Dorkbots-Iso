@@ -12,6 +12,7 @@ package dorkbots.dorkbots_iso.entity
 	public class Entity extends BroadcastingObject implements IEntity
 	{
 		public static const PATH_ARRIVED_NEXT_NODE:String = "path arrived next node";
+		public static const PATH_COMPLETE:String = "path complete";
 		public static const WALKING_ON_NODE_TYPE_OTHER:String = "walking on node type other";
 		public static const NEW_NODE:String = "new node";
 		
@@ -239,7 +240,7 @@ package dorkbots.dorkbots_iso.entity
 			{
 				_nodePrevious = _node;
 				_node = currentNode;
-				broadcasterManager.broadcastEvent( NEW_NODE , {node: _node} );
+				broadcastEvent( NEW_NODE , {node: _node} );
 			}
 			
 			_movedAmountPoint = _cartPos.subtract(cartPosPrevious);
@@ -303,7 +304,7 @@ package dorkbots.dorkbots_iso.entity
 				{
 					if (nodeType > 1)
 					{
-						this.broadcasterManager.broadcastEvent( WALKING_ON_NODE_TYPE_OTHER, {nodeType: nodeType} );
+						broadcastEvent( WALKING_ON_NODE_TYPE_OTHER, {nodeType: nodeType} );
 					}
 					return true;
 				}
@@ -320,11 +321,10 @@ package dorkbots.dorkbots_iso.entity
 		private function aiWalk():void
 		{
 			//trace("{IsoMaker} aiWalk -> path.length = " + path.length);
-			if(_path.length == 0)
+			if(_path.length == 0 && !destination)
 			{
 				//path has ended
 				dX = dY = 0;
-				
 				return;
 			}
 			
@@ -338,9 +338,12 @@ package dorkbots.dorkbots_iso.entity
 				if (Point.distance(newPos, cartPos) <= speed)
 				{
 					destination = _path.pop();
-					getMovement();
+					
+					if (destination) getMovement();
 					
 					entityArrivedAtNextNode();
+					
+					if (!destination) broadcastEvent( PATH_COMPLETE );
 				}
 			}
 		}
@@ -349,7 +352,7 @@ package dorkbots.dorkbots_iso.entity
 		{
 			putEntityInMiddleOfNode();
 			
-			this.broadcasterManager.broadcastEvent( PATH_ARRIVED_NEXT_NODE );
+			broadcastEvent( PATH_ARRIVED_NEXT_NODE );
 		}
 		
 		public final function putEntityInMiddleOfNode():void
@@ -482,7 +485,7 @@ package dorkbots.dorkbots_iso.entity
 		
 		// Don't need to add 0. This tells the pathfinder to count other numbers as walkable besides 0.
 		// use this when you want the Enemy to walk on nodes that activate other behaviors, such as lava causing damage.
-		// override this method in your projects Enemy Class to remove or add walkable node types.
+		// override this method in your projects Enemy or Hero Class to remove or add walkable node types.
 		protected function setupWalkableList():void
 		{
 			

@@ -15,10 +15,8 @@ package dorkbots.dorkbots_iso
 	
 	import dorkbots.dorkbots_broadcasters.BroadcastingObject;
 	import dorkbots.dorkbots_broadcasters.IBroadcastedEvent;
-	import dorkbots.dorkbots_iso.entity.Enemy;
 	import dorkbots.dorkbots_iso.entity.Entity;
 	import dorkbots.dorkbots_iso.entity.EntityFactory;
-	import dorkbots.dorkbots_iso.entity.Hero;
 	import dorkbots.dorkbots_iso.entity.IEnemy;
 	import dorkbots.dorkbots_iso.entity.IEntity;
 	import dorkbots.dorkbots_iso.entity.IEntityFactory;
@@ -419,7 +417,7 @@ package dorkbots.dorkbots_iso
 				
 				if (enemy.node.equals(_hero.node))
 				{
-					broadcasterManager.broadcastEvent( HERO_SHARING_NODE_WITH_ENEMY, {enemy: enemy} );
+					broadcastEvent( HERO_SHARING_NODE_WITH_ENEMY, {enemy: enemy} );
 				}
 			}
 			
@@ -447,7 +445,7 @@ package dorkbots.dorkbots_iso
 			if( pickupType > 0 )
 			{
 				pickupItem( _hero.node );
-				broadcasterManager.broadcastEvent( PICKUP_COLLECTED, {type:pickupType});
+				broadcastEvent( PICKUP_COLLECTED, {type:pickupType});
 			}	
 			
 			var triggerNode:uint = roomData.roomTriggers[ _hero.node.y ][ _hero.node.x ];
@@ -482,7 +480,7 @@ package dorkbots.dorkbots_iso
 			roomsManager.roomCurrentNum = roomNumber;
 			createRoom();
 			
-			broadcasterManager.broadcastEvent(ROOM_CHANGE, {roomNumber: roomNumber});
+			broadcastEvent(ROOM_CHANGE, {roomNumber: roomNumber});
 			
 			triggerReset = false;
 		}
