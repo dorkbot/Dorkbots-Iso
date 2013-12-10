@@ -65,7 +65,6 @@ package
 		{
 			for (var i:int = 0; i < roomsManager.roomCurrent.enemies.length; i++) 
 			{
-				trace("ldfkjalfjdslfdjsafjlsadflj");
 				roomsManager.roomCurrent.enemies[i].addEventListener( Entity.PATH_COMPLETE, enemyPathComplete );
 			}
 		}
