@@ -76,7 +76,7 @@ package
 			if (roomsManager.roomCurrent.roomWalkable[enemy.node.y][enemy.node.x] == 4)
 			{
 				trace("all your base are belong to us!!!!!");
-				isoMaker.enemyDestroy(IEnemy(event.owner));
+				isoMaker.enemyDestroy(enemy);
 			}
 		}
 		
