@@ -72,7 +72,7 @@ package
 		{
 			var enemy:IEnemy =  IEnemy(event.owner);
 			trace("{Main} enemyPathComplete -> enemy = " + enemy );
-			if (roomsManager.roomCurrent.roomWalkable[enemy.node.y][enemy.node.x] == 4 && isoMaker.enemiesSeekHero == false)
+			if (roomsManager.roomCurrent.roomWalkable[enemy.node.y][enemy.node.x] == 4 && roomsManager.roomCurrent.roomWalkable[isoMaker.hero.node.y][isoMaker.hero.node.x] == 3)
 			{
 				trace("all your base are belong to us!!!!!");
 				isoMaker.enemyDestroy(enemy);
