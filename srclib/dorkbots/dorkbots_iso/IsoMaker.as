@@ -247,7 +247,7 @@ package dorkbots.dorkbots_iso
 			}
 			
 			//trace("enemies = " + enemies.length);
-			depthSort();
+			drawToCanvas();
 		}
 		
 		private function postionViewPortCornerPoint():void
@@ -268,7 +268,7 @@ package dorkbots.dorkbots_iso
 		}
 		
 		//sort depth & draw to canvas
-		private function depthSort():void
+		private function drawToCanvas():void
 		{
 			_canvas.bitmapData.lock();
 			_canvas.bitmapData.fillRect(rect, 0xffffff);
@@ -424,7 +424,7 @@ package dorkbots.dorkbots_iso
 			
 			if (movement)
 			{
-				depthSort();
+				drawToCanvas();
 			}
 		}
 		
