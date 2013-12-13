@@ -7,8 +7,8 @@ package
 	import dorkbots.dorkbots_broadcasters.IBroadcastedEvent;
 	import dorkbots.dorkbots_iso.IIsoMaker;
 	import dorkbots.dorkbots_iso.IsoMaker;
-	import dorkbots.dorkbots_iso.entity.Enemy;
 	import dorkbots.dorkbots_iso.entity.Entity;
+	import dorkbots.dorkbots_iso.entity.IEnemy;
 	import dorkbots.dorkbots_iso.room.IIsoRoomsManager;
 	import dorkbots.dorkbots_iso.room.IsoRoomsManager;
 	
@@ -18,7 +18,6 @@ package
 	import rooms.Room2Data;
 	import rooms.Room3Data;
 	import rooms.Room4Data;
-	import dorkbots.dorkbots_iso.entity.IEnemy;
 	
 	[SWF(width='800', height='600', backgroundColor='#FFFFFF', frameRate='30')]
 	public class Main extends Sprite
@@ -71,7 +70,14 @@ package
 		
 		private function enemyPathComplete(event:IBroadcastedEvent):void
 		{
-			trace("{Main} enemyPathComplete -> enemy = " + IEnemy(event.owner) );
+			var enemy:IEnemy =  IEnemy(event.owner);
+			trace("{Main} enemyPathComplete -> enemy = " + enemy );
+			// enemy is standing on enemy base, now destroy it! all your base are belong to us!!!!!
+			if (roomsManager.roomCurrent.roomWalkable[enemy.node.y][enemy.node.x] == 4)
+			{
+				trace("all your base are belong to us!!!!!");
+				isoMaker.enemyDestroy(IEnemy(event.owner));
+			}
 		}
 		
 		private function pickupCollected(event:IBroadcastedEvent):void
@@ -84,13 +90,13 @@ package
 			trace("{Main} heroSharingNodeWithEnemy -> enemy = " + event.object.enemy);
 		}
 		
-		// you can use this for adding damage or adding health (in the future, no health or damage yet). Also can create a safe zone from enemies.
+		// you can use this for adding damage or adding health (in the future, no health or damage yet). Also can create a safe zone from enemies, or a destroy zone for enemies.
 		// use the setupWalkableList() method in the entity class, polymorph it. Look at the Hero class.
 		private function heroWalkingOnNodeTypeOther(event:IBroadcastedEvent):void
 		{
 			var nodeType:uint = event.object.nodeType;
 			//trace("{Main} heroWalkingOnNodeTypeOther -> type = " + nodeType);
-			if (nodeType == 2 || nodeType == 3)
+			if (nodeType == 3)
 			{
 				var enemyBase:Point;
 				

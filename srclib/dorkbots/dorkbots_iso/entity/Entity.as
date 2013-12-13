@@ -30,6 +30,7 @@ package dorkbots.dorkbots_iso.entity
 		protected var walkableList:Vector.<uint>;
 		private var _path:Array = new Array();
 		private var destination:Point = new Point();
+		private var broadcastPathComplete:Boolean = false;
 		
 		private var speed:Number;
 		private var _halfSize:Number;
@@ -47,8 +48,20 @@ package dorkbots.dorkbots_iso.entity
 		
 		private var _entity_mc:MovieClip;
 		
+		private var _distroyed:Boolean = false;
+		
 		public function Entity()
 		{
+		}
+
+		public final function get distroyed():Boolean
+		{
+			return _distroyed;
+		}
+
+		public final function set distroyed(value:Boolean):void
+		{
+			_distroyed = value;
 		}
 
 		public final function get finalDestination():Point
@@ -244,6 +257,12 @@ package dorkbots.dorkbots_iso.entity
 			}
 			
 			_movedAmountPoint = _cartPos.subtract(cartPosPrevious);
+			
+			if (broadcastPathComplete)
+			{
+				broadcastPathComplete = false;
+				broadcastEvent( PATH_COMPLETE );
+			}
 		}
 		
 		private function checkWalkable():Boolean
@@ -343,7 +362,7 @@ package dorkbots.dorkbots_iso.entity
 					
 					entityArrivedAtNextNode();
 					
-					if (!destination) broadcastEvent( PATH_COMPLETE );
+					if (!destination) broadcastPathComplete = true;
 				}
 			}
 		}

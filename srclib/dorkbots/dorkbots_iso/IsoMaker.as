@@ -54,7 +54,6 @@ package dorkbots.dorkbots_iso
 		private var triggerReset:Boolean = true;
 		
 		private var _hero:IHero;
-		private var enemies:Vector.<IEnemy> = new Vector.<IEnemy>();
 		private var _enemyTargetNode:Point;
 		private var _enemiesSeekHero:Boolean = true;
 		
@@ -107,15 +106,6 @@ package dorkbots.dorkbots_iso
 			entityFactory = null;
 			
 			super.dispose();
-		}
-		
-		public final function enemyDestroy(enemy:IEnemy):void
-		{
-			// TO DO
-			// move enemies array to roomData, so enemies can keep their health when the hero leaves the room
-			// remove enemy from the array
-			// 0 enemies entity node in the roomData
-			// call destroy
 		}
 		
 		public final function get enemiesSeekHero():Boolean
@@ -181,6 +171,8 @@ package dorkbots.dorkbots_iso
 			}
 			_hero.entity_mc.clip.gotoAndStop(_hero.facingNext);
 			
+			roomData.enemies = new Vector.<IEnemy>();
+			
 			// Look for hero
 			var buildHero:Boolean = false;
 			var tileType:uint;
@@ -217,7 +209,7 @@ package dorkbots.dorkbots_iso
 						//trace("found enemy j = " + j + ", i = " + i);
 						enemy = entityFactory.createEnemy(tileType);
 						enemy.addEventListener( Entity.PATH_ARRIVED_NEXT_NODE, enemyArrivedAtNextPathNode);
-						enemies.push( enemy.init( roomData.createEnemy(tileType), roomData.speed, roomData.enemyHalfSize, roomData, tileType ) );
+						roomData.enemies.push( enemy.init( roomData.createEnemy(tileType), roomData.speed, roomData.enemyHalfSize, roomData, tileType ) );
 
 						placeEntity(enemy, j, i, tileType);
 					}
@@ -248,12 +240,11 @@ package dorkbots.dorkbots_iso
 			if (_enemiesSeekHero) _enemyTargetNode = _hero.node;
 			if (_enemyTargetNode)
 			{
-				for (i = 0; i < enemies.length; i++)
+				for (i = 0; i < roomData.enemies.length; i++)
 				{
-					enemies[i].findPathToNode(_enemyTargetNode);
+					roomData.enemies[i].findPathToNode(_enemyTargetNode);
 				}
 			}
-			roomData.enemies = enemies;
 			
 			//trace("enemies = " + enemies.length);
 			depthSort();
@@ -329,9 +320,9 @@ package dorkbots.dorkbots_iso
 					
 					// add enemies to canvas
 					enemiesAddedToNode = 0;
-					for (k = 0; k < enemies.length; k++) 
+					for (k = 0; k < roomData.enemies.length; k++) 
 					{
-						enemy = enemies[k];
+						enemy = roomData.enemies[k];
 						if(enemy.node.x == j && enemy.node.y == i)
 						{
 							pos.x = enemy.cartPos.x + viewPortCornerPoint.x;
@@ -395,29 +386,39 @@ package dorkbots.dorkbots_iso
 			var enemy:IEnemy;
 			
 			// update enemies
-			for (i = 0; i < enemies.length; i++) 
+			for (i = 0; i < roomData.enemies.length; i++) 
 			{
-				enemy = enemies[i];
+				enemy = roomData.enemies[i];
 				roomData.enemiesWalkable[enemy.node.y][enemy.node.x] = 0;
 				enemy.loop();
 				enemy.move();
-				roomData.enemiesWalkable[enemy.node.y][enemy.node.x] = enemy.type;
-				
-				// if enemy has stopped hunting, set a new path for the hero
-				if (!enemy.finalDestination && !enemy.node.equals(_enemyTargetNode) )
+				if (enemy.distroyed)
 				{
-					if (_enemyTargetNode) enemy.findPathToNode(_enemyTargetNode);
-				}
-				
-				if (enemy.moved)
-				{
-					//trace("enemy move");
 					movement = true;
+					roomData.enemies.splice( roomData.enemies.indexOf( enemy ) , 1 );
+					roomData.roomEntities[enemy.node.y][enemy.node.x] = 0;
+					enemy.dispose();
 				}
-				
-				if (enemy.node.equals(_hero.node))
+				else
 				{
-					broadcastEvent( HERO_SHARING_NODE_WITH_ENEMY, {enemy: enemy} );
+					roomData.enemiesWalkable[enemy.node.y][enemy.node.x] = enemy.type;
+					
+					// if enemy has stopped hunting, set a new path for the hero
+					if (!enemy.finalDestination && !enemy.node.equals(_enemyTargetNode) )
+					{
+						if (_enemyTargetNode) enemy.findPathToNode(_enemyTargetNode);
+					}
+					
+					if (enemy.moved)
+					{
+						//trace("enemy move");
+						movement = true;
+					}
+					
+					if (enemy.node.equals(_hero.node))
+					{
+						broadcastEvent( HERO_SHARING_NODE_WITH_ENEMY, {enemy: enemy} );
+					}
 				}
 			}
 			
@@ -505,6 +506,16 @@ package dorkbots.dorkbots_iso
 			}
 		}
 		
+		public final function enemyDestroy(enemy:IEnemy):void
+		{
+			// TO DO
+			// move enemies array to roomData, so enemies can keep their health when the hero leaves the room
+			// remove enemy from the array
+			// 0 enemies entity node in the roomData
+			// call destroy
+			enemy.distroyed = true;
+		}
+		
 		// TO DO
 		// put enemies in statis
 		private function disposeOfEnemies():void
@@ -519,14 +530,14 @@ package dorkbots.dorkbots_iso
 			}
 			
 			var enemy:IEnemy
-			for (i = 0; i < enemies.length; i++) 
+			for (i = 0; i < roomData.enemies.length; i++) 
 			{
-				enemy = enemies[i];
+				enemy = roomData.enemies[i];
 				enemy.removeEventListener( Entity.PATH_ARRIVED_NEXT_NODE, enemyArrivedAtNextPathNode);
 				roomData.roomEntities[enemy.node.y][enemy.node.x] = enemy.type;
 				enemy.dispose();
 			}
-			enemies.length = 0;
+			roomData.enemies.length = 0;
 		}
 		
 		private function updateEnemiesWalkable():void
