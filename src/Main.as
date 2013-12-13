@@ -72,6 +72,11 @@ package
 		{
 			var enemy:IEnemy =  IEnemy(event.owner);
 			trace("{Main} enemyPathComplete -> enemy = " + enemy );
+		}
+		
+		private function enemyArrivedAtDestroyNode(event:IBroadcastedEvent):void
+		{
+			var enemy:IEnemy =  IEnemy(event.owner);
 			// enemy is standing on enemy base, now destroy it! all your base are belong to us!!!!!
 			if (roomsManager.roomCurrent.roomWalkable[enemy.node.y][enemy.node.x] == 4)
 			{
@@ -98,11 +103,12 @@ package
 			//trace("{Main} heroWalkingOnNodeTypeOther -> type = " + nodeType);
 			if (nodeType == 3)
 			{
+				var i:int;
 				var enemyBase:Point;
 				
 				// label for the first loop, used for break
 				toploop: 
-				for (var i:int = 0; i < roomsManager.roomCurrent.roomNodeGridHeight; i++) 
+				for (i = 0; i < roomsManager.roomCurrent.roomNodeGridHeight; i++) 
 				{
 					for (var j:int = 0; j < roomsManager.roomCurrent.roomNodeGridWidth; j++) 
 					{
@@ -120,6 +126,20 @@ package
 					isoMaker.hero.addEventListener( Entity.NEW_NODE, heroNewNode );
 					isoMaker.enemiesSeekHero = false;
 					isoMaker.enemyTargetNode = enemyBase;
+					
+					// add listener, when enemy arrives at target.
+					for (i = 0; i < roomsManager.roomCurrent.enemies.length; i++) 
+					{
+						roomsManager.roomCurrent.enemies[i].addEventListener( Entity.PATH_COMPLETE, enemyArrivedAtDestroyNode );
+					}
+				}
+				else
+				{
+					// remove listener, hero is not sending enemy to destory zone
+					for (i = 0; i < roomsManager.roomCurrent.enemies.length; i++) 
+					{
+						roomsManager.roomCurrent.enemies[i].removeEventListener( Entity.PATH_COMPLETE, enemyArrivedAtDestroyNode );
+					}
 				}
 			}
 		}
