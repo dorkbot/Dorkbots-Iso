@@ -72,13 +72,7 @@ package
 		{
 			var enemy:IEnemy =  IEnemy(event.owner);
 			trace("{Main} enemyPathComplete -> enemy = " + enemy );
-		}
-		
-		private function enemyArrivedAtDestroyNode(event:IBroadcastedEvent):void
-		{
-			var enemy:IEnemy =  IEnemy(event.owner);
-			// enemy is standing on enemy base, now destroy it! all your base are belong to us!!!!!
-			if (roomsManager.roomCurrent.roomWalkable[enemy.node.y][enemy.node.x] == 4)
+			if (roomsManager.roomCurrent.roomWalkable[enemy.node.y][enemy.node.x] == 4 && isoMaker.enemiesSeekHero == false)
 			{
 				trace("all your base are belong to us!!!!!");
 				isoMaker.enemyDestroy(enemy);
@@ -126,20 +120,6 @@ package
 					isoMaker.hero.addEventListener( Entity.NEW_NODE, heroNewNode );
 					isoMaker.enemiesSeekHero = false;
 					isoMaker.enemyTargetNode = enemyBase;
-					
-					// add listener, when enemy arrives at target.
-					for (i = 0; i < roomsManager.roomCurrent.enemies.length; i++) 
-					{
-						roomsManager.roomCurrent.enemies[i].addEventListener( Entity.PATH_COMPLETE, enemyArrivedAtDestroyNode );
-					}
-				}
-				else
-				{
-					// remove listener, hero is not sending enemy to destory zone
-					for (i = 0; i < roomsManager.roomCurrent.enemies.length; i++) 
-					{
-						roomsManager.roomCurrent.enemies[i].removeEventListener( Entity.PATH_COMPLETE, enemyArrivedAtDestroyNode );
-					}
 				}
 			}
 		}
