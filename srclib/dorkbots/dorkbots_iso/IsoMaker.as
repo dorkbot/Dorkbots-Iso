@@ -69,6 +69,19 @@ package dorkbots.dorkbots_iso
 			
 			Block trigers by putting the room numbers into an array.
 			this class double checks this array before swapping rooms.
+			For progression, locking and un-locking rooms.
+			
+			first change roomData Array, make it use entities.
+			Don't destroy or null this array.
+			Entity Stasis
+			Method for getting back the entity art when in stasis/after stasis.
+			from Entity factory
+			Do this, entities will need to preserve their health.
+			add attack button/command
+			enemie use attack?
+			broadcast event when attack and attacking - entity
+			build UI including button, button is for touch, also use cursor control
+			
 			
 			*/
 			container_mc = aContainer_mc;
@@ -144,7 +157,20 @@ package dorkbots.dorkbots_iso
 		}
 		
 		private function createRoom():void
-		{				
+		{
+			// TO DO
+			// fixing the floor issue
+			// create floor once - create bitmap data
+			// draw to canvas first
+			// use the view port position and offset for its matrix
+			// need to pass an array of wall tile art, these are tiles that have height.
+			// draw wall tiles everyloop so the entities can appear behind them.
+				
+			// roomData has an array - tileArtWithHeight
+			// add art that could be infront of an entity, cover it.
+			// all other tile art is created once, during create room, this is back ground art.
+			// this optimizes performance and display, it will prevent the floor tiles from sometimes covering up entities feet.
+			
 			roomData = roomsManager.getRoom(roomsManager.roomCurrentNum);
 			roomData.init();
 			
@@ -171,6 +197,8 @@ package dorkbots.dorkbots_iso
 			}
 			_hero.entity_mc.clip.gotoAndStop(_hero.facingNext);
 			
+			// TO DO
+			// don't create a new one, check if there is already enemies in stasis
 			roomData.enemies = new Vector.<IEnemy>();
 			
 			// Look for hero
@@ -209,6 +237,9 @@ package dorkbots.dorkbots_iso
 						//trace("found enemy j = " + j + ", i = " + i);
 						enemy = entityFactory.createEnemy(tileType);
 						enemy.addEventListener( Entity.PATH_ARRIVED_NEXT_NODE, enemyArrivedAtNextPathNode);
+						
+						// TO DO
+						// reanimate enemies if they are in stasis
 						roomData.enemies.push( enemy.init( roomData.createEnemy(tileType), roomData.speed, roomData.enemyHalfSize, roomData, tileType ) );
 
 						placeEntity(enemy, j, i, tileType);
@@ -280,6 +311,7 @@ package dorkbots.dorkbots_iso
 			var enemiesAddedToNode:uint = 0;
 			var addHero:Boolean = false;
 			var entitiesToAddToNode:Array = new Array();
+			//var objectsToAdd:Array = new Array();
 			var k:int = 0;
 			
 			for (var i:uint = 0; i < roomData.roomNodeGridHeight; i++)
@@ -298,7 +330,7 @@ package dorkbots.dorkbots_iso
 					mat.tx = borderOffsetX + pos.x;
 					mat.ty = borderOffsetY + pos.y;
 					
-					roomData.tileArt.gotoAndStop( tileType + 1 )
+					roomData.tileArt.gotoAndStop( tileType + 1 );
 					_canvas.bitmapData.draw( roomData.tileArt, mat);
 					
 					if(roomData.roomPickups[i][j] > 0)
@@ -311,14 +343,20 @@ package dorkbots.dorkbots_iso
 					{
 						addHero = true;
 						mat.tx = _hero.entity_mc.x;
+						if (_hero.entity_mc.y > mat.ty) trace("hero's y = " + _hero.entity_mc.y + ", mat.ty = " + mat.ty);
 						mat.ty = _hero.entity_mc.y;
 						//trace("hero.entity_mc.x = " + hero.entity_mc.x + ", hero.entity_mc.y = " + hero.entity_mc.y);
-						//_canvas.bitmapData.draw(hero.entity_mc, mat);
 						
 						entitiesToAddToNode.push( {matrixTY: mat.ty, matrix: mat.clone(), entity: _hero} );
 					}
 					
+					// TO DO
+					// when adding the grid system, wont need this loop.
 					// add enemies to canvas
+					
+					// TO DO
+					// build an array only for enemies, number represents position, -1 is no enemie.
+					// remove this search for loop
 					enemiesAddedToNode = 0;
 					for (k = 0; k < roomData.enemies.length; k++) 
 					{
@@ -349,6 +387,8 @@ package dorkbots.dorkbots_iso
 						
 					}
 				}
+				
+				
 			}
 			
 			_canvas.bitmapData.unlock();
@@ -357,6 +397,26 @@ package dorkbots.dorkbots_iso
 		//the game loop
 		public final function loop():void
 		{
+			// TO DO
+			// set walkable for each entity, Enities don't use roomData. walkable is created at the start of the loop.
+			// each type may need its own walkable, but not indiviual entities. Hero and Enemies.
+			// remove the walkable list from the pathFinder. 
+			// create a walkable for it, 0 is walkable, simple.
+			
+			// first create entity walkable area.
+			// then refactor entity code to use it. temp set it to roomData walkable.
+			// then IsoMaker starts to build the arrays every loop. Use the entities...
+			//But
+			// what if an only one or a few entities can update, somethings become walkable?
+			// current list method is probably best, allows for dynamic walkable setting.
+			//
+			// write up a comment explaining logic and benift of current list approach.
+			// don't have to traverse loops and set. List is better, it's inserted into Path finding search.
+			
+			
+			
+			// Enemies killing
+			// build all from entities array
 			var movement:Boolean = false;
 			
 			// Move and update hero
@@ -394,6 +454,7 @@ package dorkbots.dorkbots_iso
 				enemy.move();
 				if (enemy.distroyed)
 				{
+					// dispose of enemy
 					movement = true;
 					roomData.enemies.splice( roomData.enemies.indexOf( enemy ) , 1 );
 					roomData.roomEntities[enemy.node.y][enemy.node.x] = 0;
@@ -508,16 +569,13 @@ package dorkbots.dorkbots_iso
 		
 		public final function enemyDestroy(enemy:IEnemy):void
 		{
-			// TO DO
-			// move enemies array to roomData, so enemies can keep their health when the hero leaves the room
-			// remove enemy from the array
-			// 0 enemies entity node in the roomData
-			// call destroy
 			enemy.distroyed = true;
 		}
 		
 		// TO DO
-		// put enemies in statis
+		// use this or not?
+		// don't destroy enemies when leaving a room
+		// put enemies in stasis
 		private function disposeOfEnemies():void
 		{
 			var i:uint;
@@ -540,6 +598,8 @@ package dorkbots.dorkbots_iso
 			roomData.enemies.length = 0;
 		}
 		
+		// TO DO
+		// use this or not?
 		private function updateEnemiesWalkable():void
 		{
 			var newWalkable:Array = roomData.enemiesWalkable;
