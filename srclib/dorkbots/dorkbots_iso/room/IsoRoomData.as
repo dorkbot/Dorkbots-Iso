@@ -1,6 +1,7 @@
 package dorkbots.dorkbots_iso.room
 {
 	import flash.display.MovieClip;
+	import flash.errors.IllegalOperationError;
 	
 	import dorkbots.dorkbots_iso.entity.IEnemy;
 
@@ -9,6 +10,7 @@ package dorkbots.dorkbots_iso.room
 		protected var _roomWalkable:Array;
 		protected var _roomPickups:Array;
 		protected var _roomTileArt:Array;
+		private var _roomTileArtWithHeight:Array;
 		protected var _roomTriggers:Array;
 		protected var _roomEntities:Array;
 		
@@ -35,6 +37,7 @@ package dorkbots.dorkbots_iso.room
 		//the tiles
 		protected var tileArtClass:Class;
 		private var _tileArt:MovieClip;
+		protected var _tileArtWithHeight:Vector.<uint>;
 		protected var tilePickupClass:Class;
 		private var _tilePickup:MovieClip;
 		
@@ -50,12 +53,30 @@ package dorkbots.dorkbots_iso.room
 		{
 			_roomNodeGridWidth = _roomWalkable[0].length;
 			_roomNodeGridHeight = _roomWalkable.length;
+			
+			setupTileArtWithHeight();
+		}
+		
+		// ABSTRACT method. Must be overridden by a child class.
+		protected function setupTileArtWithHeight():void
+		{
+			// use this method to register/add tile art types that have height, that could be in the foreground or cover moving entities.
+			throw new IllegalOperationError("The setupTileArtWithHeight method is an ABSTRACT method and must be overridden in a child class!! Use this method to register/add tile art types that have height, that could be in the foreground or cover moving entities.");
 		}
 		
 		public final function stasis():void
 		{
 			_hero = null;
 			_tileArt = null;
+			
+			// TO DO
+			// put enemies in stasis
+			//_enemies
+			
+			_roomTileArtWithHeight.length = 0;
+			_roomTileArtWithHeight = null;
+			_tileArtWithHeight.length = 0;
+			_tileArtWithHeight = null;
 		}
 		
 		public final function dispose():void
@@ -186,6 +207,21 @@ package dorkbots.dorkbots_iso.room
 		public final function get roomTileArt():Array
 		{
 			return _roomTileArt;
+		}
+		
+		public final function get roomTileArtWithHeight():Array
+		{
+			return _roomTileArtWithHeight;
+		}
+		
+		public final function set roomTileArtWithHeight(value:Array):void
+		{
+			_roomTileArtWithHeight = value;
+		}
+		
+		public final function get tileArtWithHeight():Vector.<uint>
+		{
+			return _tileArtWithHeight;
 		}
 		
 		public final function get roomTriggers():Array

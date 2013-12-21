@@ -35,6 +35,9 @@ package dorkbots.dorkbots_iso
 		private var _canvas:Bitmap;
 		private var rect:Rectangle;
 		
+		private var floor_bmp:BitmapData;
+		private var floorBitmapMatrixTransOffset:Point;
+		
 		private var viewPortCornerPoint:Point = new Point();
 		
 		private var borderOffsetX:Number;
@@ -81,7 +84,6 @@ package dorkbots.dorkbots_iso
 			enemie use attack?
 			broadcast event when attack and attacking - entity
 			build UI including button, button is for touch, also use cursor control
-			
 			
 			*/
 			container_mc = aContainer_mc;
@@ -157,20 +159,7 @@ package dorkbots.dorkbots_iso
 		}
 		
 		private function createRoom():void
-		{
-			// TO DO
-			// fixing the floor issue
-			// create floor once - create bitmap data
-			// draw to canvas first
-			// use the view port position and offset for its matrix
-			// need to pass an array of wall tile art, these are tiles that have height.
-			// draw wall tiles everyloop so the entities can appear behind them.
-				
-			// roomData has an array - tileArtWithHeight
-			// add art that could be infront of an entity, cover it.
-			// all other tile art is created once, during create room, this is back ground art.
-			// this optimizes performance and display, it will prevent the floor tiles from sometimes covering up entities feet.
-			
+		{			
 			roomData = roomsManager.getRoom(roomsManager.roomCurrentNum);
 			roomData.init();
 			
@@ -278,6 +267,7 @@ package dorkbots.dorkbots_iso
 			}
 			
 			//trace("enemies = " + enemies.length);
+			drawFloor();
 			drawToCanvas();
 		}
 		
@@ -298,6 +288,54 @@ package dorkbots.dorkbots_iso
 			entity.node.y = y;
 		}
 		
+		private function drawFloor():void
+		{			
+			var tileType:uint;
+			var mat:Matrix = new Matrix();
+			var pos:Point = new Point();
+			roomData.roomTileArtWithHeight = new Array();
+			
+			// make sure bitmap data is big enough to fit all tile art
+			floor_bmp = new BitmapData( ( roomData.roomNodeGridWidth * roomData.nodeWidth ) * 2, ( roomData.roomNodeGridHeight * roomData.nodeWidth ) * 2);
+			
+			floorBitmapMatrixTransOffset = new Point(( roomData.roomNodeGridWidth * roomData.nodeWidth ) / 2, ( roomData.roomNodeGridHeight * roomData.nodeWidth ) / 2);
+			for (var i:uint = 0; i < roomData.roomNodeGridHeight; i++)
+			{
+				roomData.roomTileArtWithHeight[i] = new Array();
+				for (var j:uint = 0; j < roomData.roomNodeGridWidth; j++)
+				{
+					tileType = roomData.roomTileArt[i][j];
+					
+					if (roomData.tileArtWithHeight.indexOf(tileType) < 0)
+					{
+						// tile art does not have height so draw it to the floor						
+						// draw floor tile
+						pos.x = j * roomData.nodeWidth;
+						pos.y = i * roomData.nodeWidth;
+						
+						pos = IsoHelper.twoDToIso(pos);
+						// push the tiles to the right and down, to make sure all tiles are drawn
+						mat.tx = borderOffsetX + pos.x;
+						mat.ty = borderOffsetY + pos.y;
+						mat.translate(floorBitmapMatrixTransOffset.x, floorBitmapMatrixTransOffset.y);
+						
+						roomData.tileArt.gotoAndStop( tileType + 1 );
+						floor_bmp.draw( roomData.tileArt, mat );
+						
+						// 0 = tile art with no height.
+						roomData.roomTileArtWithHeight[i][j] = 0;
+					}
+					else
+					{
+						// tile art does have height so add it to the tile art height arrays
+						roomData.roomTileArtWithHeight[i][j] = tileType + 1;
+					}
+				}
+			}
+
+			floor_bmp.unlock();
+		}
+		
 		//sort depth & draw to canvas
 		private function drawToCanvas():void
 		{
@@ -311,8 +349,19 @@ package dorkbots.dorkbots_iso
 			var enemiesAddedToNode:uint = 0;
 			var addHero:Boolean = false;
 			var entitiesToAddToNode:Array = new Array();
-			//var objectsToAdd:Array = new Array();
 			var k:int = 0;
+			
+			pos.x = viewPortCornerPoint.x;
+			pos.y = viewPortCornerPoint.y;
+			
+			pos = IsoHelper.twoDToIso(pos);
+			mat.tx = pos.x;
+			mat.ty = pos.y;
+			
+			// draw the floor
+			// move the floor bitmap data back over so it matches the rest of the room
+			mat.translate(-floorBitmapMatrixTransOffset.x, -floorBitmapMatrixTransOffset.y);
+			_canvas.bitmapData.draw( floor_bmp, mat );
 			
 			for (var i:uint = 0; i < roomData.roomNodeGridHeight; i++)
 			{
@@ -321,8 +370,6 @@ package dorkbots.dorkbots_iso
 					entitiesToAddToNode.length = 0;
 					addHero = false;
 					
-					tileType = roomData.roomTileArt[i][j];
-					
 					pos.x = j * roomData.nodeWidth + viewPortCornerPoint.x;
 					pos.y = i * roomData.nodeWidth + viewPortCornerPoint.y;
 					
@@ -330,20 +377,28 @@ package dorkbots.dorkbots_iso
 					mat.tx = borderOffsetX + pos.x;
 					mat.ty = borderOffsetY + pos.y;
 					
-					roomData.tileArt.gotoAndStop( tileType + 1 );
-					_canvas.bitmapData.draw( roomData.tileArt, mat);
+					// tile art with height
+					tileType = roomData.roomTileArtWithHeight[i][j];
+					if (tileType > 0)
+					{						
+						roomData.tileArt.gotoAndStop( tileType );
+						_canvas.bitmapData.draw( roomData.tileArt, mat);
+					}					
 					
-					if(roomData.roomPickups[i][j] > 0)
+					// pick ups
+					tileType = roomData.roomPickups[i][j];
+					if(tileType > 0)
 					{
-						roomData.tilePickup.gotoAndStop(roomData.roomPickups[i][j]);
+						roomData.tilePickup.gotoAndStop(tileType);
 						_canvas.bitmapData.draw(roomData.tilePickup, mat);
 					}
 					
+					// hero
 					if(_hero.node.x == j && _hero.node.y == i)
 					{
 						addHero = true;
 						mat.tx = _hero.entity_mc.x;
-						if (_hero.entity_mc.y > mat.ty) trace("hero's y = " + _hero.entity_mc.y + ", mat.ty = " + mat.ty);
+						//if (_hero.entity_mc.y > mat.ty) trace("hero's y = " + _hero.entity_mc.y + ", mat.ty = " + mat.ty);
 						mat.ty = _hero.entity_mc.y;
 						//trace("hero.entity_mc.x = " + hero.entity_mc.x + ", hero.entity_mc.y = " + hero.entity_mc.y);
 						
@@ -357,6 +412,8 @@ package dorkbots.dorkbots_iso
 					// TO DO
 					// build an array only for enemies, number represents position, -1 is no enemie.
 					// remove this search for loop
+					
+					// enemies
 					enemiesAddedToNode = 0;
 					for (k = 0; k < roomData.enemies.length; k++) 
 					{

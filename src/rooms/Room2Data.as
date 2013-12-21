@@ -2,7 +2,7 @@ package rooms
 {
 	import dorkbots.dorkbots_iso.room.IIsoRoomData;
 	
-	public class Room2Data extends AbstractRoomData implements IIsoRoomData
+	public class Room2Data extends ProjectAbstractRoomData implements IIsoRoomData
 	{
 		final public function Room2Data()
 		{
