@@ -104,9 +104,11 @@ package dorkbots.dorkbots_iso
 		private var floorBitmapMatrixTransOffset:Point;
 		
 		private var viewPortCornerPoint:Point = new Point();
+		protected var _viewWidth:Number = 800;
+		protected var _viewHeight:Number = 600
 		
-		private var borderOffsetX:Number;
-		private var borderOffsetY:Number;
+		protected var _borderOffsetY:Number = 20;
+		protected var _borderOffsetX:Number = 320;
 		 
 		//Senocular KeyObject Class
 		private var key:KeyObject;
@@ -141,6 +143,26 @@ package dorkbots.dorkbots_iso
 			{
 				container_mc.addEventListener(Event.ADDED_TO_STAGE, containerAddedToStage);
 			}
+		}
+
+		public final function set borderOffsetY(value:Number):void
+		{
+			_borderOffsetY = value;
+		}
+
+		public final function set borderOffsetX(value:Number):void
+		{
+			_borderOffsetX = value;
+		}
+
+		public final function set viewHeight(value:Number):void
+		{
+			_viewHeight = value;
+		}
+
+		public final function set viewWidth(value:Number):void
+		{
+			_viewWidth = value;
 		}
 
 		private function containerAddedToStage(event:Event = null):void
@@ -220,10 +242,7 @@ package dorkbots.dorkbots_iso
 			_hero.init(roomData.speed, roomData.heroHalfSize, 1);
 			_hero.wake(roomData.hero, roomData);
 			
-			borderOffsetX = roomData.borderOffsetX;
-			borderOffsetY = roomData.borderOffsetY;
-			
-			_canvas = new Bitmap( new BitmapData( roomData.viewWidth, roomData.viewHeight ) );
+			_canvas = new Bitmap( new BitmapData( _viewWidth, _viewHeight ) );
 			rect = _canvas.bitmapData.rect;
 			RemoveDisplayObjects.removeAllDisplayObjects(container_mc);
 			container_mc.addChild(_canvas);
@@ -296,8 +315,8 @@ package dorkbots.dorkbots_iso
 						pos.x += viewPortCornerPoint.x;
 						pos.y += viewPortCornerPoint.y;
 						pos = IsoHelper.twoDToIso(pos);
-						_hero.entity_mc.x = borderOffsetX + pos.x;
-						_hero.entity_mc.y = borderOffsetY + pos.y;
+						_hero.entity_mc.x = _borderOffsetX + pos.x;
+						_hero.entity_mc.y = _borderOffsetY + pos.y;
 						
 						buildHero = false;
 						
@@ -338,8 +357,8 @@ package dorkbots.dorkbots_iso
 		private function postionViewPortCornerPoint():void
 		{
 			viewPortCornerPoint.x = viewPortCornerPoint.y = 0;
-			viewPortCornerPoint.x -= (_hero.cartPos.x - (roomData.viewWidth / 2)) + _hero.entity_mc.width;
-			viewPortCornerPoint.y -= _hero.cartPos.y - (roomData.viewHeight / 2);
+			viewPortCornerPoint.x -= (_hero.cartPos.x - (_viewWidth / 2)) + _hero.entity_mc.width;
+			viewPortCornerPoint.y -= _hero.cartPos.y - (_viewHeight / 2);
 		}
 		
 		private function placeEntity(entity:IEntity, x:uint, y:uint):void
@@ -379,8 +398,8 @@ package dorkbots.dorkbots_iso
 						
 						pos = IsoHelper.twoDToIso(pos);
 						// push the tiles to the right and down, to make sure all tiles are drawn
-						mat.tx = borderOffsetX + pos.x;
-						mat.ty = borderOffsetY + pos.y;
+						mat.tx = _borderOffsetX + pos.x;
+						mat.ty = _borderOffsetY + pos.y;
 						mat.translate(floorBitmapMatrixTransOffset.x, floorBitmapMatrixTransOffset.y);
 						
 						roomData.tileArt.gotoAndStop( tileType + 1 );
@@ -443,8 +462,8 @@ package dorkbots.dorkbots_iso
 					pos.y = i * roomData.nodeWidth + viewPortCornerPoint.y;
 					
 					pos = IsoHelper.twoDToIso(pos);
-					mat.tx = borderOffsetX + pos.x;
-					mat.ty = borderOffsetY + pos.y;
+					mat.tx = _borderOffsetX + pos.x;
+					mat.ty = _borderOffsetY + pos.y;
 					
 					// tile art with height
 					tileType = roomData.roomTileArtWithHeight[i][j];
@@ -478,8 +497,8 @@ package dorkbots.dorkbots_iso
 							pos.x = entity.cartPos.x + viewPortCornerPoint.x;
 							pos.y = entity.cartPos.y + viewPortCornerPoint.y;
 							pos = IsoHelper.twoDToIso(pos);
-							mat.tx = borderOffsetX + pos.x;
-							mat.ty = borderOffsetY + pos.y - (enemiesAddedToNode * 2);
+							mat.tx = _borderOffsetX + pos.x;
+							mat.ty = _borderOffsetY + pos.y - (enemiesAddedToNode * 2);
 							
 							entitiesToAddToNode.push( {matrixTY: mat.ty, matrix: mat.clone(), entity: entity} );
 							
@@ -857,8 +876,8 @@ package dorkbots.dorkbots_iso
 		{
 			var clickPt:Point = new Point();
 			
-			clickPt.x = e.stageX - borderOffsetX;
-			clickPt.y = e.stageY - borderOffsetY;
+			clickPt.x = e.stageX - _borderOffsetX;
+			clickPt.y = e.stageY - _borderOffsetY;
 			//trace("{IsoMaker} handleMouseClick -> clickPt = " + clickPt);
 			
 			clickPt = IsoHelper.isoTo2D(clickPt);

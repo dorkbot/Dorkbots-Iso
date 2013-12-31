@@ -19,8 +19,8 @@ package dorkbots.dorkbots_iso.entity
 		protected var roomData:IIsoRoomData;
 		private var _type:uint;
 		
-		private var borderOffsetX:Number;
-		private var borderOffsetY:Number;
+		/*private var borderOffsetX:Number;
+		private var borderOffsetY:Number;*/
 		
 		private var _cartPos:Point = new Point();
 		private var cartPosPrevious:Point = new Point();
@@ -213,8 +213,8 @@ package dorkbots.dorkbots_iso.entity
 			_facingNext = _facingCurrent;
 			setFaceView();
 			roomData = aRoomData;
-			borderOffsetX = roomData.borderOffsetX;
-			borderOffsetY = roomData.borderOffsetY;
+			//borderOffsetX = roomData.borderOffsetX;
+			//borderOffsetY = roomData.borderOffsetY;
 			
 			_cartPos = new Point();
 			destination = new Point();

@@ -9,6 +9,10 @@ package dorkbots.dorkbots_iso
 
 	public interface IIsoMaker extends IBroadcastingObject
 	{
+		function set borderOffsetY(value:Number):void;
+		function set borderOffsetX(value:Number):void;
+		function set viewHeight(value:Number):void;
+		function set viewWidth(value:Number):void;
 		function get canvas():Bitmap;
 		function start():void;
 		function loop():void;

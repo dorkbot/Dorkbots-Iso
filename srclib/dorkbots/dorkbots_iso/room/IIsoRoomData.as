@@ -23,11 +23,7 @@ package dorkbots.dorkbots_iso.room
 		function set enemies(value:Vector.<IEnemy>):void;
 		function get enemiesWalkable():Array;
 		function set enemiesWalkable(value:Array):void;
-		function get borderOffsetX():uint;
-		function get borderOffsetY():uint;
 		function get nodeWidth():uint;
-		function get viewHeight():Number;
-		function get viewWidth():Number;
 		function get roomNodeGridHeight():uint;
 		function get roomNodeGridWidth():uint;
 		function init():void;

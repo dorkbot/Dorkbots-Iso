@@ -21,11 +21,7 @@ package dorkbots.dorkbots_iso.room
 		private var _roomNodeGridWidth:uint;
 		private var _roomNodeGridHeight:uint;
 		
-		protected var _viewWidth:Number = 800;
-		protected var _viewHeight:Number = 600
 		protected var _nodeWidth:uint = 50;
-		protected var _borderOffsetY:uint = 20;
-		protected var _borderOffsetX:uint = 320;
 		
 		// hero
 		protected var heroClass:Class;
@@ -195,30 +191,10 @@ package dorkbots.dorkbots_iso.room
 		{
 			_enemiesWalkable = value;
 		}
-		
-		public final function get borderOffsetX():uint
-		{
-			return _borderOffsetX;
-		}
-
-		public final function get borderOffsetY():uint
-		{
-			return _borderOffsetY;
-		}
 
 		public final function get nodeWidth():uint
 		{
 			return _nodeWidth;
-		}
-		
-		public final function get viewHeight():Number
-		{
-			return _viewHeight;
-		}
-		
-		public final function get viewWidth():Number
-		{
-			return _viewWidth;
 		}
 		
 		public final function get roomNodeGridHeight():uint

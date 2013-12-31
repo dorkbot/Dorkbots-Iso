@@ -1,8 +1,11 @@
 package
 {
 	import flash.display.Sprite;
+	import flash.display.StageAlign;
+	import flash.display.StageScaleMode;
 	import flash.events.Event;
 	import flash.geom.Point;
+	import flash.system.Capabilities;
 	
 	import dorkbots.dorkbots_broadcasters.IBroadcastedEvent;
 	import dorkbots.dorkbots_iso.IIsoMaker;
@@ -27,6 +30,12 @@ package
 		
 		public function Main()
 		{
+			// use this for mobile
+			this.stage.align = StageAlign.TOP_LEFT;
+			this.stage.scaleMode = StageScaleMode.NO_SCALE;
+			this.stage.stageHeight = Capabilities.screenResolutionY;
+			this.stage.stageWidth = Capabilities.screenResolutionX;
+			
 			roomsManager = new IsoRoomsManager();
 			roomsManager.addRoom( Room1Data );
 			roomsManager.addRoom( Room2Data );
@@ -37,6 +46,10 @@ package
 			addChild(isoContainer);
 			
 			isoMaker = new IsoMaker( isoContainer, roomsManager, new EntityDorkbotsFactory());
+			isoMaker.viewHeight = this.stage.stageHeight;
+			isoMaker.viewWidth = this.stage.stageWidth;
+			isoMaker.borderOffsetX = 320;
+			isoMaker.borderOffsetY = 20;
 			isoMaker.addEventListener( IsoMaker.ROOM_CHANGE, roomChange );
 			isoMaker.addEventListener( IsoMaker.PICKUP_COLLECTED, pickupCollected );
 			isoMaker.addEventListener( IsoMaker.HERO_SHARING_NODE_WITH_ENEMY, heroSharingNodeWithEnemy );
