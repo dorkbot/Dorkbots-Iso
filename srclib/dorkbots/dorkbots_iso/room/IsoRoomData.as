@@ -7,12 +7,16 @@ package dorkbots.dorkbots_iso.room
 
 	public class IsoRoomData implements IIsoRoomData
 	{
+		private var _stasis:Boolean = false;
+		
 		protected var _roomWalkable:Array;
 		protected var _roomPickups:Array;
 		protected var _roomTileArt:Array;
 		private var _roomTileArtWithHeight:Array;
 		protected var _roomTriggers:Array;
 		protected var _roomEntities:Array;
+		
+		private var _entitiesGrid:Array;
 		
 		private var _roomNodeGridWidth:uint;
 		private var _roomNodeGridHeight:uint;
@@ -54,7 +58,30 @@ package dorkbots.dorkbots_iso.room
 			_roomNodeGridWidth = _roomWalkable[0].length;
 			_roomNodeGridHeight = _roomWalkable.length;
 			
+			initEntitiesGrid();
+			
 			setupTileArtWithHeight();
+		}
+		
+		public final function wake():void
+		{
+			_stasis = false;
+			
+			initEntitiesGrid();
+		}
+		
+		// SET UP 3D ARRAY FOR ENTITIES
+		private function initEntitiesGrid():void
+		{
+			_entitiesGrid = new Array();
+			for (var i:uint = 0; i < _roomNodeGridHeight; i++)
+			{
+				_entitiesGrid[i] = new Array();
+				for (var j:uint = 0; j < _roomNodeGridWidth; j++)
+				{
+					_entitiesGrid[i][j] = new Array();
+				}
+			}
 		}
 		
 		// ABSTRACT method. Must be overridden by a child class.
@@ -64,19 +91,19 @@ package dorkbots.dorkbots_iso.room
 			throw new IllegalOperationError("The setupTileArtWithHeight method is an ABSTRACT method and must be overridden in a child class!! Use this method to register/add tile art types that have height, that could be in the foreground or cover moving entities.");
 		}
 		
-		public final function stasis():void
+		public final function putInStasis():void
 		{
+			_stasis = true;
 			_hero = null;
 			_tileArt = null;
-			
-			// TO DO
-			// put enemies in stasis
-			//_enemies
 			
 			_roomTileArtWithHeight.length = 0;
 			_roomTileArtWithHeight = null;
 			_tileArtWithHeight.length = 0;
 			_tileArtWithHeight = null;
+			
+			_entitiesGrid.length = 0;
+			_entitiesGrid = null;
 		}
 		
 		public final function dispose():void
@@ -98,7 +125,12 @@ package dorkbots.dorkbots_iso.room
 			tileArtClass = null;
 			tilePickupClass = null;
 			
-			stasis();
+			putInStasis();
+		}
+		
+		public final function get stasis():Boolean
+		{
+			return _stasis;
 		}
 		
 		public final function get heroFacing():String
@@ -237,6 +269,11 @@ package dorkbots.dorkbots_iso.room
 		public final function get roomEntities():Array
 		{
 			return _roomEntities;
+		}
+		
+		public final function get entitiesGrid():Array
+		{
+			return _entitiesGrid;
 		}
 	}
 }

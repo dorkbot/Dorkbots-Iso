@@ -8,9 +8,13 @@ package dorkbots.dorkbots_iso.entity
 
 	public interface IEntity extends IBroadcastingObject
 	{
-		function init(a_mc:MovieClip, aSpeed:Number, aHalfSize:Number, aRoomData:IIsoRoomData, aType:uint):IEntity;
-		function get distroyed():Boolean;
-		function set distroyed(value:Boolean):void;
+		function get speed():Number;
+		function set speed(value:Number):void;
+		function putInStasis():void;
+		function init(aSpeed:Number, aHalfSize:Number, aType:uint):IEntity
+		function wake(a_mc:MovieClip, aRoomData:IIsoRoomData):IEntity
+		function get destroyed():Boolean;
+		function set destroyed(value:Boolean):void;
 		function get type():uint;
 		function get finalDestination():Point;
 		function get health():Number;

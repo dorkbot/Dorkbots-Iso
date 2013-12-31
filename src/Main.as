@@ -86,7 +86,7 @@ package
 		
 		private function heroSharingNodeWithEnemy(event:IBroadcastedEvent):void
 		{
-			//trace("{Main} heroSharingNodeWithEnemy -> enemy = " + event.object.enemy);
+			trace("{Main} heroSharingNodeWithEnemy -> enemy = " + event.object.enemy);
 		}
 		
 		// you can use this for adding damage or adding health (in the future, no health or damage yet). Also can create a safe zone from enemies, or a destroy zone for enemies.

@@ -1,3 +1,67 @@
+/*
+TO DO
+
+---
+Create a map class that can be toggled on and off - clean up
+it only needs heroCartPos
+has its own createLevel, us only walkable level data	
+
+
+---
+Block trigers by putting the room numbers into an array.
+this class double checks this array before swapping rooms.
+For progression, locking and un-locking rooms.
+
+
+---
+Change roomData Array, make it use entities.
+Don't destroy or null this array when putting room into stasis
+Entity Stasis
+Method for getting back the entity art when in stasis/after stasis.
+from Entity factory
+entities will need to preserve their health.
+add attack button/command
+enemie use same attack interface?
+broadcast event when attack and attacking - entity
+build UI including button, button is for touch screens and for mouse control
+
+
+---
+VIEW
+Dependency injection
+View is Abstracted, polymorphiable - allows swapping view technology (display list or Starling/Citrus, etc.)
+Encapsulated by IsoMaker
+injected by instantiator, as parameter
+
+Entities polymorph animation and direction.
+Give more flexibility via inheritance of entities.
+Include attack and direction of attack.
+developers can then customize via inheritance
+
+first build interface for Entities, refactor view to them.
+
+
+---
+Attacking, health and death
+Entity class has list of entities
+- Flee
+- Allies
+- Hunt
+
+
+---
+room data trigger method - allows mapping of triggers via inheritance/polymorphing
+use ex: triggers in a room all lead to the same room
+uses conditionals to find and return the room to open
+pass trigger number to find and return next room
+use conditionals to find where to place the hero
+pass the past room to find and return hero's place
+Default method returns the same number as the last room, for the hero to stand
+Default method returns the trigger number that was passed.
+
+
+*/
+
 package dorkbots.dorkbots_iso
 {
 	import com.csharks.juwalbose.IsoHelper;
@@ -17,6 +81,7 @@ package dorkbots.dorkbots_iso
 	import dorkbots.dorkbots_broadcasters.IBroadcastedEvent;
 	import dorkbots.dorkbots_iso.entity.Entity;
 	import dorkbots.dorkbots_iso.entity.EntityFactory;
+	import dorkbots.dorkbots_iso.entity.Hero;
 	import dorkbots.dorkbots_iso.entity.IEnemy;
 	import dorkbots.dorkbots_iso.entity.IEntity;
 	import dorkbots.dorkbots_iso.entity.IEntityFactory;
@@ -62,30 +127,6 @@ package dorkbots.dorkbots_iso
 		
 		public function IsoMaker(aContainer_mc:DisplayObjectContainer, aRoomsManager:IIsoRoomsManager, aEntityFactory:IEntityFactory = null)
 		{
-			/*
-			TO DO
-			
-			Create a map class that can be toggled on and off - clean up
-			it only needs heroCartPos
-			has its own createLevel, us only walkable level data	
-			
-			
-			Block trigers by putting the room numbers into an array.
-			this class double checks this array before swapping rooms.
-			For progression, locking and un-locking rooms.
-			
-			first change roomData Array, make it use entities.
-			Don't destroy or null this array.
-			Entity Stasis
-			Method for getting back the entity art when in stasis/after stasis.
-			from Entity factory
-			Do this, entities will need to preserve their health.
-			add attack button/command
-			enemie use attack?
-			broadcast event when attack and attacking - entity
-			build UI including button, button is for touch, also use cursor control
-			
-			*/
 			container_mc = aContainer_mc;
 			roomsManager = aRoomsManager;
 			entityFactory = aEntityFactory;
@@ -123,6 +164,9 @@ package dorkbots.dorkbots_iso
 			super.dispose();
 		}
 		
+		/********************************************************************************
+		 * GETTERS AND SETTERS
+		 ********************************************************************************/
 		public final function get enemiesSeekHero():Boolean
 		{
 			return _enemiesSeekHero;
@@ -158,6 +202,10 @@ package dorkbots.dorkbots_iso
 			createRoom();
 		}
 		
+		
+		/********************************************************************************
+		 * CREATING A ROOM
+		 ********************************************************************************/
 		private function createRoom():void
 		{			
 			roomData = roomsManager.getRoom(roomsManager.roomCurrentNum);
@@ -165,10 +213,12 @@ package dorkbots.dorkbots_iso
 			
 			if (!_hero)
 			{
+				// only create Hero once
 				_hero = entityFactory.createHero();
 			}
 			
-			_hero.init(roomData.hero, roomData.speed, roomData.heroHalfSize, roomData, 1);
+			_hero.init(roomData.speed, roomData.heroHalfSize, 1);
+			_hero.wake(roomData.hero, roomData);
 			
 			borderOffsetX = roomData.borderOffsetX;
 			borderOffsetY = roomData.borderOffsetY;
@@ -180,15 +230,19 @@ package dorkbots.dorkbots_iso
 			
 			_hero.facingCurrent = "";
 			
+			
+			
+			
+			/********************************************************************************
+			 * TO DO
+			 * postion method for entities
+			********************************************************************************/
 			if (!roomsManager.roomHasChanged)
 			{
 				_hero.facingNext = _hero.facingCurrent = roomData.heroFacing;
 			}
 			_hero.entity_mc.clip.gotoAndStop(_hero.facingNext);
 			
-			// TO DO
-			// don't create a new one, check if there is already enemies in stasis
-			roomData.enemies = new Vector.<IEnemy>();
 			
 			// Look for hero
 			var buildHero:Boolean = false;
@@ -220,25 +274,21 @@ package dorkbots.dorkbots_iso
 							buildHero = true;
 						}	
 					}
-					//trace("tileType = " + tileType);
-					if (tileType > 1)
+					
+					// found enemy, create enemy only if room is not in stasis, this means room is a new and enemies have yet to be created.
+					if (tileType > 1 && !roomData.stasis)
 					{
-						//trace("found enemy j = " + j + ", i = " + i);
 						enemy = entityFactory.createEnemy(tileType);
-						enemy.addEventListener( Entity.PATH_ARRIVED_NEXT_NODE, enemyArrivedAtNextPathNode);
-						
-						// TO DO
-						// reanimate enemies if they are in stasis
-						roomData.enemies.push( enemy.init( roomData.createEnemy(tileType), roomData.speed, roomData.enemyHalfSize, roomData, tileType ) );
-
-						placeEntity(enemy, j, i, tileType);
+						roomData.enemies.push( enemy.init( roomData.speed, roomData.enemyHalfSize, tileType ) );
+						placeEntity(enemy, j, i);
 					}
+					
 					
 					if (buildHero)
 					{
 						// found hero
 						// makes sure hero is positioned in the center of the screen
-						placeEntity(_hero, j, i, tileType);
+						placeEntity(_hero, j, i);
 						
 						postionViewPortCornerPoint();
 						
@@ -254,6 +304,20 @@ package dorkbots.dorkbots_iso
 						//break toploop;
 					}				
 				}
+			}
+			
+			roomData.wake();
+			entityMoved(_hero);
+			
+			// wake any enemies from stasis, if room is in stasis. Also wakes new enemies.
+			for (i = 0; i < roomData.enemies.length; i++)
+			{
+				enemy = roomData.enemies[i];
+				enemy.addEventListener( Entity.PATH_ARRIVED_NEXT_NODE, enemyArrivedAtNextPathNode);
+				enemy.wake( roomData.createEnemy(tileType), roomData );
+				placeEntity(enemy, enemy.node.x, enemy.node.y);
+				//roomData.entitiesGrid[enemy.node.y][enemy.node.x].push(enemy);
+				entityMoved(enemy)
 			}
 			
 			updateEnemiesWalkable();
@@ -278,7 +342,7 @@ package dorkbots.dorkbots_iso
 			viewPortCornerPoint.y -= _hero.cartPos.y - (roomData.viewHeight / 2);
 		}
 		
-		private function placeEntity(entity:IEntity, x:uint, y:uint, type):void
+		private function placeEntity(entity:IEntity, x:uint, y:uint):void
 		{			
 			//find the middle of the node
 			entity.cartPos.x = x * roomData.nodeWidth + (roomData.nodeWidth / 2);
@@ -336,6 +400,10 @@ package dorkbots.dorkbots_iso
 			floor_bmp.unlock();
 		}
 		
+		
+		/********************************************************************************
+		 * DRAWING TO CANVAS
+		 ********************************************************************************/
 		//sort depth & draw to canvas
 		private function drawToCanvas():void
 		{
@@ -346,6 +414,7 @@ package dorkbots.dorkbots_iso
 			var mat:Matrix = new Matrix();
 			var pos:Point = new Point();
 			var enemy:IEnemy;
+			var entity:IEntity;
 			var enemiesAddedToNode:uint = 0;
 			var addHero:Boolean = false;
 			var entitiesToAddToNode:Array = new Array();
@@ -368,7 +437,7 @@ package dorkbots.dorkbots_iso
 				for (var j:uint = 0; j < roomData.roomNodeGridWidth; j++)
 				{
 					entitiesToAddToNode.length = 0;
-					addHero = false;
+					//addHero = false;
 					
 					pos.x = j * roomData.nodeWidth + viewPortCornerPoint.x;
 					pos.y = i * roomData.nodeWidth + viewPortCornerPoint.y;
@@ -393,44 +462,30 @@ package dorkbots.dorkbots_iso
 						_canvas.bitmapData.draw(roomData.tilePickup, mat);
 					}
 					
-					// hero
-					if(_hero.node.x == j && _hero.node.y == i)
-					{
-						addHero = true;
-						mat.tx = _hero.entity_mc.x;
-						//if (_hero.entity_mc.y > mat.ty) trace("hero's y = " + _hero.entity_mc.y + ", mat.ty = " + mat.ty);
-						mat.ty = _hero.entity_mc.y;
-						//trace("hero.entity_mc.x = " + hero.entity_mc.x + ", hero.entity_mc.y = " + hero.entity_mc.y);
-						
-						entitiesToAddToNode.push( {matrixTY: mat.ty, matrix: mat.clone(), entity: _hero} );
-					}
-					
-					// TO DO
-					// when adding the grid system, wont need this loop.
-					// add enemies to canvas
-					
-					// TO DO
-					// build an array only for enemies, number represents position, -1 is no enemie.
-					// remove this search for loop
-					
-					// enemies
 					enemiesAddedToNode = 0;
-					for (k = 0; k < roomData.enemies.length; k++) 
+					
+					for (k = 0; k < roomData.entitiesGrid[i][j].length; k++) 
 					{
-						enemy = roomData.enemies[k];
-						if(enemy.node.x == j && enemy.node.y == i)
+						entity = roomData.entitiesGrid[i][j][k];
+						if (entity is Hero)
 						{
-							pos.x = enemy.cartPos.x + viewPortCornerPoint.x;
-							pos.y = enemy.cartPos.y + viewPortCornerPoint.y;
+							mat.tx = _hero.entity_mc.x;
+							mat.ty = _hero.entity_mc.y;
+							entitiesToAddToNode.push( {matrixTY: mat.ty, matrix: mat.clone(), entity: entity} );
+						}
+						else
+						{
+							pos.x = entity.cartPos.x + viewPortCornerPoint.x;
+							pos.y = entity.cartPos.y + viewPortCornerPoint.y;
 							pos = IsoHelper.twoDToIso(pos);
 							mat.tx = borderOffsetX + pos.x;
 							mat.ty = borderOffsetY + pos.y - (enemiesAddedToNode * 2);
-							//_canvas.bitmapData.draw(enemy.entity_mc, mat);
 							
-							entitiesToAddToNode.push( {matrixTY: mat.ty, matrix: mat.clone(), entity: enemy} );
+							entitiesToAddToNode.push( {matrixTY: mat.ty, matrix: mat.clone(), entity: entity} );
 							
 							enemiesAddedToNode++;
 						}
+						
 					}
 					
 					// add entities bassed on their matrix.ty, so that entities with a higher ty will be drawn in front
@@ -441,39 +496,20 @@ package dorkbots.dorkbots_iso
 						{
 							_canvas.bitmapData.draw( IEntity(entitiesToAddToNode[k].entity).entity_mc, entitiesToAddToNode[k].matrix);
 						}
-						
 					}
 				}
-				
-				
 			}
 			
 			_canvas.bitmapData.unlock();
 		}
 		
+		
+		/********************************************************************************
+		 * LOOP
+		 ********************************************************************************/
 		//the game loop
 		public final function loop():void
 		{
-			// TO DO
-			// set walkable for each entity, Enities don't use roomData. walkable is created at the start of the loop.
-			// each type may need its own walkable, but not indiviual entities. Hero and Enemies.
-			// remove the walkable list from the pathFinder. 
-			// create a walkable for it, 0 is walkable, simple.
-			
-			// first create entity walkable area.
-			// then refactor entity code to use it. temp set it to roomData walkable.
-			// then IsoMaker starts to build the arrays every loop. Use the entities...
-			//But
-			// what if an only one or a few entities can update, somethings become walkable?
-			// current list method is probably best, allows for dynamic walkable setting.
-			//
-			// write up a comment explaining logic and benift of current list approach.
-			// don't have to traverse loops and set. List is better, it's inserted into Path finding search.
-			
-			
-			
-			// Enemies killing
-			// build all from entities array
 			var movement:Boolean = false;
 			
 			// Move and update hero
@@ -491,6 +527,7 @@ package dorkbots.dorkbots_iso
 					
 					viewPortCornerPoint.x -=  _hero.movedAmountPoint.x;
 					viewPortCornerPoint.y -=  _hero.movedAmountPoint.y;
+					entityMoved(_hero);
 				}
 			}
 			
@@ -509,13 +546,11 @@ package dorkbots.dorkbots_iso
 				roomData.enemiesWalkable[enemy.node.y][enemy.node.x] = 0;
 				enemy.loop();
 				enemy.move();
-				if (enemy.distroyed)
+				if (enemy.destroyed)
 				{
 					// dispose of enemy
 					movement = true;
-					roomData.enemies.splice( roomData.enemies.indexOf( enemy ) , 1 );
-					roomData.roomEntities[enemy.node.y][enemy.node.x] = 0;
-					enemy.dispose();
+					disposeOfEnemy(enemy);
 				}
 				else
 				{
@@ -531,11 +566,17 @@ package dorkbots.dorkbots_iso
 					{
 						//trace("enemy move");
 						movement = true;
+						entityMoved(enemy);
 					}
 					
 					if (enemy.node.equals(_hero.node))
 					{
 						broadcastEvent( HERO_SHARING_NODE_WITH_ENEMY, {enemy: enemy} );
+						if(enemy.attackReady())
+						{
+							// TO DO
+							// attack hero
+						}
 					}
 				}
 			}
@@ -546,7 +587,112 @@ package dorkbots.dorkbots_iso
 			}
 		}
 		
+		private function swapRoom(roomNumber:uint):void
+		{
+			putEnemiesInStasis();
+			
+			roomsManager.putRoomInStasis(roomData);
+			roomsManager.roomCurrentNum = roomNumber;
+			createRoom();
+			
+			broadcastEvent(ROOM_CHANGE, {roomNumber: roomNumber});
+			
+			triggerReset = false;
+		}
 		
+		
+		/********************************************************************************
+		 * ENTITY STUFF
+		 ********************************************************************************/
+		// remove entity from previous node, add to new
+		private function entityMoved(entity:IEntity):void
+		{
+			removeEntityFromGrid(entity);
+			roomData.entitiesGrid[entity.node.y][entity.node.x].push(entity);
+		}
+		
+		private function removeEntityFromGrid(entity:IEntity):void
+		{
+			var array:Array = roomData.entitiesGrid[entity.nodePrevious.y][entity.nodePrevious.x];
+			var index:int = array.indexOf(entity);
+			if (index > -1) array.splice(index, 1);
+			
+			array = roomData.entitiesGrid[entity.node.y][entity.node.x];
+			index = array.indexOf(entity);
+			if (index > -1) array.splice(index, 1);
+		}
+		
+		
+		/********************************************************************************
+		 * ENEMIES STUFF
+		 ********************************************************************************/
+		private function enemyArrivedAtNextPathNode(event:IBroadcastedEvent):void
+		{
+			var enemy:IEnemy = IEnemy(event.owner);
+			if (enemy.finalDestination)
+			{
+				if(!enemy.finalDestination.equals(_enemyTargetNode)) 
+				{
+					enemy.findPathToNode(_enemyTargetNode);
+				}
+			}
+			else
+			{
+				if ( !enemy.node.equals(_enemyTargetNode) ) enemy.findPathToNode(_enemyTargetNode);
+			}
+		}
+		
+		public final function enemyDestroy(enemy:IEnemy):void
+		{
+			// the loop performs full destroy of enemy
+			enemy.destroyed = true;
+		}
+		
+		private function disposeOfEnemy(enemy:IEnemy):void
+		{
+			removeEntityFromGrid(enemy);
+			roomData.enemies.splice( roomData.enemies.indexOf( enemy ) , 1 );
+			roomData.roomEntities[enemy.node.y][enemy.node.x] = 0;
+			enemy.dispose();
+		}
+		
+		private function putEnemiesInStasis():void
+		{
+			var i:uint;
+			var enemy:IEnemy
+			for (i = 0; i < roomData.enemies.length; i++) 
+			{
+				enemy = roomData.enemies[i];
+				enemy.removeEventListener( Entity.PATH_ARRIVED_NEXT_NODE, enemyArrivedAtNextPathNode);
+				roomData.roomEntities[enemy.node.y][enemy.node.x] = enemy.type;
+				enemy.putInStasis();
+			}
+		}
+		
+		// add enemy node position to enemies walkable, so enemies don't occupy the same node.
+		private function updateEnemiesWalkable():void
+		{
+			var newWalkable:Array = roomData.enemiesWalkable;
+			
+			var i:int;
+			var enemy:IEnemy;
+			
+			for (i = 0; i < roomData.roomNodeGridHeight; i++)
+			{
+				newWalkable[i] = roomData.roomWalkable[i].slice();
+			}
+			
+			for (i = 0; i < roomData.enemies.length; i++) 
+			{
+				enemy = roomData.enemies[i];
+				newWalkable[enemy.node.y][enemy.node.x] = 1;
+			}
+		}
+		
+		
+		/********************************************************************************
+		 * HERO
+		 ********************************************************************************/
 		/**
 		 * heroMoved
 		 * 
@@ -591,96 +737,6 @@ package dorkbots.dorkbots_iso
 			return true;
 		}
 		
-		private function swapRoom(roomNumber:uint):void
-		{
-			disposeOfEnemies();
-			
-			roomsManager.putRoomInStasis(roomData);
-			roomsManager.roomCurrentNum = roomNumber;
-			createRoom();
-			
-			broadcastEvent(ROOM_CHANGE, {roomNumber: roomNumber});
-			
-			triggerReset = false;
-		}
-		
-		
-		/**
-		 * ENEMIES STUFF
-		 */
-		private function enemyArrivedAtNextPathNode(event:IBroadcastedEvent):void
-		{
-			var enemy:IEnemy = IEnemy(event.owner);
-			if (enemy.finalDestination)
-			{
-				if(!enemy.finalDestination.equals(_enemyTargetNode)) 
-				{
-					enemy.findPathToNode(_enemyTargetNode);
-				}
-			}
-			else
-			{
-				if ( !enemy.node.equals(_enemyTargetNode) ) enemy.findPathToNode(_enemyTargetNode);
-			}
-		}
-		
-		public final function enemyDestroy(enemy:IEnemy):void
-		{
-			enemy.distroyed = true;
-		}
-		
-		// TO DO
-		// use this or not?
-		// don't destroy enemies when leaving a room
-		// put enemies in stasis
-		private function disposeOfEnemies():void
-		{
-			var i:uint;
-			for (i = 0; i < roomData.roomEntities.length; i++) 
-			{
-				for (var j:int = 0; j < roomData.roomEntities[i].length; j++) 
-				{
-					roomData.roomEntities[i][j] = 0;
-				}
-			}
-			
-			var enemy:IEnemy
-			for (i = 0; i < roomData.enemies.length; i++) 
-			{
-				enemy = roomData.enemies[i];
-				enemy.removeEventListener( Entity.PATH_ARRIVED_NEXT_NODE, enemyArrivedAtNextPathNode);
-				roomData.roomEntities[enemy.node.y][enemy.node.x] = enemy.type;
-				enemy.dispose();
-			}
-			roomData.enemies.length = 0;
-		}
-		
-		// TO DO
-		// use this or not?
-		private function updateEnemiesWalkable():void
-		{
-			var newWalkable:Array = roomData.enemiesWalkable;
-			
-			var i:int;
-			var enemy:IEnemy;
-			
-			for (i = 0; i < roomData.roomNodeGridHeight; i++)
-			{
-				newWalkable[i] = roomData.roomWalkable[i].slice();
-			}
-			
-			for (i = 0; i < roomData.enemies.length; i++) 
-			{
-				enemy = roomData.enemies[i];
-				newWalkable[enemy.node.y][enemy.node.x] = 1;
-			}
-		}
-		
-		
-		/**
-		 * HERO STUFF
-		 */
-		
 		/**
 		 * Pickups
 		 */
@@ -694,7 +750,6 @@ package dorkbots.dorkbots_iso
 			roomData.roomPickups[ tilePt.y ][ tilePt.x ] = 0;
 		}
 		
-		
 		/**
 		 * Room triggers
 		 */
@@ -702,7 +757,6 @@ package dorkbots.dorkbots_iso
 		{
 			return( roomData.roomTriggers[ tilePt.y ][ tilePt.x ] > 0 );
 		}
-		
 
 		/**
 		 * Keyboard Control
@@ -792,7 +846,6 @@ package dorkbots.dorkbots_iso
 			{
 				//key board control active. Stop pathfinding
 				_hero.path.length = 0;
-				//hero.moved = true;
 				underKeyBoardControl = true;
 			}
 		}

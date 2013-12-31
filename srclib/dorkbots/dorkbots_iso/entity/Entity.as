@@ -32,7 +32,7 @@ package dorkbots.dorkbots_iso.entity
 		private var destination:Point = new Point();
 		private var broadcastPathComplete:Boolean = false;
 		
-		private var speed:Number;
+		private var _speed:Number;
 		private var _halfSize:Number;
 		private var _movedAmountPoint:Point = new Point();
 		
@@ -48,20 +48,30 @@ package dorkbots.dorkbots_iso.entity
 		
 		private var _entity_mc:MovieClip;
 		
-		private var _distroyed:Boolean = false;
+		private var _destroyed:Boolean = false;
 		
 		public function Entity()
 		{
 		}
 
-		public final function get distroyed():Boolean
+		public final function get speed():Number
 		{
-			return _distroyed;
+			return _speed;
 		}
 
-		public final function set distroyed(value:Boolean):void
+		public final function set speed(value:Number):void
 		{
-			_distroyed = value;
+			_speed = value;
+		}
+
+		public final function get destroyed():Boolean
+		{
+			return _destroyed;
+		}
+
+		public final function set destroyed(value:Boolean):void
+		{
+			_destroyed = value;
 		}
 
 		public final function get finalDestination():Point
@@ -182,16 +192,11 @@ package dorkbots.dorkbots_iso.entity
 			_facingCurrent = value;
 		}
 		
-		public function init(a_mc:MovieClip, aSpeed:Number, aHalfSize:Number, aRoomData:IIsoRoomData, aType:uint):IEntity
+		public final function init(aSpeed:Number, aHalfSize:Number, aType:uint):IEntity
 		{
 			_path.length = 0;
-			_entity_mc = a_mc;
-			_entity_mc.clip.gotoAndStop(_facingNext);
-			speed = aSpeed;
+			_speed = aSpeed;
 			_halfSize = aHalfSize;
-			roomData = aRoomData;
-			borderOffsetX = roomData.borderOffsetX;
-			borderOffsetY = roomData.borderOffsetY;
 			
 			_type = aType;
 			
@@ -200,18 +205,42 @@ package dorkbots.dorkbots_iso.entity
 			return this;
 		}
 		
+		public final function wake(a_mc:MovieClip, aRoomData:IIsoRoomData):IEntity
+		{
+			_entity_mc = a_mc;
+			_entity_mc.clip.gotoAndStop(_facingNext);
+			idle = true;
+			_facingNext = _facingCurrent;
+			setFaceView();
+			roomData = aRoomData;
+			borderOffsetX = roomData.borderOffsetX;
+			borderOffsetY = roomData.borderOffsetY;
+			
+			_cartPos = new Point();
+			destination = new Point();
+			_movedAmountPoint = new Point();
+			
+			//move();
+			
+			return this;
+		}
+		
 		override public function dispose():void
+		{
+			putInStasis();
+			_node = null;
+			
+			super.dispose();
+		}
+		
+		public final function putInStasis():void
 		{
 			roomData = null;
 			_cartPos = null;
-			_node = null;
 			_path.length = 0;
-			_path = null;
 			destination = null;
 			_movedAmountPoint = null;
 			_entity_mc = null;
-			
-			super.dispose();
 		}
 		
 		public final function loop():void
@@ -220,9 +249,8 @@ package dorkbots.dorkbots_iso.entity
 			aiWalk();
 		}
 		
-		public final function move():void
-		{			
-			_moved = false;
+		private function setFaceView():void
+		{
 			if (dY == 0 && dX == 0)
 			{
 				if (_facingNext != "") _entity_mc.clip.gotoAndStop(_facingNext);
@@ -234,11 +262,18 @@ package dorkbots.dorkbots_iso.entity
 				_facingCurrent = _facingNext;
 				_entity_mc.clip.gotoAndPlay(_facingNext);
 			}
+		}
+		
+		public final function move():void
+		{			
+			_moved = false;
+			
+			setFaceView();
 			
 			if (! idle && checkWalkable())
 			{
-				_cartPos.x += speed * dX;
-				_cartPos.y += speed * dY;
+				_cartPos.x += _speed * dX;
+				_cartPos.y += _speed * dY;
 				
 				_moved = true;
 			} 
@@ -268,8 +303,8 @@ package dorkbots.dorkbots_iso.entity
 		private function checkWalkable():Boolean
 		{
 			var newPos:Point = new Point();
-			newPos.x = _cartPos.x + (speed * dX);
-			newPos.y = _cartPos.y + (speed * dY);
+			newPos.x = _cartPos.x + (_speed * dX);
+			newPos.y = _cartPos.y + (_speed * dY);
 			
 			switch (_facingNext)
 			{
@@ -354,7 +389,7 @@ package dorkbots.dorkbots_iso.entity
 			else if( _node.equals(destination))
 			{	
 				var newPos:Point = new Point(_node.x * roomData.nodeWidth + (roomData.nodeWidth / 2), _node.y * roomData.nodeWidth + (roomData.nodeWidth / 2));
-				if (Point.distance(newPos, cartPos) <= speed)
+				if (Point.distance(newPos, cartPos) <= _speed)
 				{
 					destination = _path.pop();
 					

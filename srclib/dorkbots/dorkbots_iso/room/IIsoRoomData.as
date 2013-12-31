@@ -6,7 +6,9 @@ package dorkbots.dorkbots_iso.room
 
 	public interface IIsoRoomData
 	{
-		function stasis():void;
+		function get stasis():Boolean;
+		function wake():void;
+		function putInStasis():void;
 		function dispose():void;
 		function get heroFacing():String;
 		function get speed():uint;
@@ -36,5 +38,6 @@ package dorkbots.dorkbots_iso.room
 		function get roomTriggers():Array;
 		function get roomPickups():Array;
 		function get roomEntities():Array;
+		function get entitiesGrid():Array;
 	}
 }

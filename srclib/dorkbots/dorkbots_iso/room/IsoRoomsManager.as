@@ -47,7 +47,7 @@ package dorkbots.dorkbots_iso.room
 		
 		public final function putRoomInStasis(roomData:IIsoRoomData):void
 		{
-			roomData.stasis();
+			roomData.putInStasis();
 		}
 		
 		public final function disposeOfRoom(roomData:IIsoRoomData):void
