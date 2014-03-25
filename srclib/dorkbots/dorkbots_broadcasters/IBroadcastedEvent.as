@@ -33,9 +33,9 @@ package dorkbots.dorkbots_broadcasters
 {
 	public interface IBroadcastedEvent
 	{
-		function get name():String;
-		function get object():Object;
-		function get owner():Object;
+		function name():String;
+		function object():Object;
+		function owner():Object;
 		function dispose():void;
 	}
 }

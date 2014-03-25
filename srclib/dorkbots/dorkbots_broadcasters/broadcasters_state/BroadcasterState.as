@@ -96,7 +96,7 @@ package dorkbots.dorkbots_broadcasters.broadcasters_state
 		 * Returns the last state.
 		 * 
 		 */
-		public final function get lastState():String
+		public final function lastState():String
 		{
 			return _lastState;
 		}
@@ -105,7 +105,7 @@ package dorkbots.dorkbots_broadcasters.broadcasters_state
 		 * Returns the current state.
 		 * 
 		 */
-		public final function get currentState():String
+		public final function currentState():String
 		{
 			return _currentState;
 		}
@@ -139,7 +139,7 @@ package dorkbots.dorkbots_broadcasters.broadcasters_state
 		 * Returns the amount of times the state history has been cleared.
 		 * 
 		 */
-		public final function get stateHistoryClearedCount():uint
+		public final function stateHistoryClearedCount():uint
 		{
 			return _stateHistoryClearedCount;
 		}

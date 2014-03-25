@@ -258,6 +258,7 @@ package dorkbots.dorkbots_iso.entity
 			}
 			else if (idle || _facingCurrent != _facingNext)
 			{
+				// direction has changed
 				idle = false;
 				_facingCurrent = _facingNext;
 				_entity_mc.clip.gotoAndPlay(_facingNext);

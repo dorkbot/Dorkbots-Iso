@@ -69,7 +69,7 @@ package
 		
 		private function roomChange(event:IBroadcastedEvent):void
 		{
-			trace("{Main} roomChange -> roomNumber = " + event.object.roomNumber);
+			trace("{Main} roomChange -> roomNumber = " + event.object().roomNumber);
 			setUpEnemies();
 		}
 		
@@ -83,7 +83,7 @@ package
 		
 		private function enemyPathComplete(event:IBroadcastedEvent):void
 		{
-			var enemy:IEnemy =  IEnemy(event.owner);
+			var enemy:IEnemy =  IEnemy(event.owner());
 			trace("{Main} enemyPathComplete -> enemy = " + enemy );
 			if (roomsManager.roomCurrent.roomWalkable[enemy.node.y][enemy.node.x] == 4 && roomsManager.roomCurrent.roomWalkable[isoMaker.hero.node.y][isoMaker.hero.node.x] == 3)
 			{
@@ -94,19 +94,19 @@ package
 		
 		private function pickupCollected(event:IBroadcastedEvent):void
 		{
-			trace("{Main} pickupCollected -> type = " + event.object.type);
+			trace("{Main} pickupCollected -> type = " + event.object().type);
 		}
 		
 		private function heroSharingNodeWithEnemy(event:IBroadcastedEvent):void
 		{
-			trace("{Main} heroSharingNodeWithEnemy -> enemy = " + event.object.enemy);
+			trace("{Main} heroSharingNodeWithEnemy -> enemy = " + event.object().enemy);
 		}
 		
 		// you can use this for adding damage or adding health (in the future, no health or damage yet). Also can create a safe zone from enemies, or a destroy zone for enemies.
 		// use the setupWalkableList() method in the entity class, polymorph it. Look at the Hero class.
 		private function heroWalkingOnNodeTypeOther(event:IBroadcastedEvent):void
 		{
-			var nodeType:uint = event.object.nodeType;
+			var nodeType:uint = event.object().nodeType;
 			//trace("{Main} heroWalkingOnNodeTypeOther -> type = " + nodeType);
 			if (nodeType == 3)
 			{
@@ -139,7 +139,7 @@ package
 		
 		private function heroNewNode(event:IBroadcastedEvent):void
 		{
-			var node:Point = event.object.node;
+			var node:Point = event.object().node;
 			//trace("{Main} heroNewNode -> node = " + event.object.node);
 			var nodeWalkableType:uint = roomsManager.roomCurrent.roomWalkable[node.y][node.x];
 			//trace("{Main} heroNewNode -> nodeWalkableType = " + nodeWalkableType);

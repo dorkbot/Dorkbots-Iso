@@ -44,17 +44,17 @@ package dorkbots.dorkbots_broadcasters
 			_object = aObject;
 		}
 		
-		public function get name():String
+		public function name():String
 		{
 			return _name;
 		}
 		
-		public final function get object():Object
+		public final function object():Object
 		{
 			return _object;
 		}
 
-		public final function get owner():Object
+		public final function owner():Object
 		{
 			return _owner;
 		}

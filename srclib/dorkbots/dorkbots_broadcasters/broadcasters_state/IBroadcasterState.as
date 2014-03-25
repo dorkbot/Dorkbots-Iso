@@ -36,9 +36,9 @@ package dorkbots.dorkbots_broadcasters.broadcasters_state
 	public interface IBroadcasterState extends IBroadcastingObject
 	{
 		function updateState(state:String, object:Object = null):void;
-		function get currentState():String;
+		function currentState():String;
 		function checkStateHistory(state:String):Boolean;
 		function clearStateHistory():void;
-		function get stateHistoryClearedCount():uint;
+		function stateHistoryClearedCount():uint;
 	}
 }

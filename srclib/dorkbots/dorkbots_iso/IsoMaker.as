@@ -38,16 +38,22 @@ Give more flexibility via inheritance of entities.
 Include attack and direction of attack.
 developers can then customize via inheritance
 
+node art class. Returns bitmap data instead of using movie clips. Movie clips are still used but instead turned into bitmaps.
+
 first build interface for Entities, refactor view to them.
 
 
 ---
 Attacking, health and death
+Build state system for entities, Flee, Flock, Hunt, etc.
 Entity class has list of entities
 - Flee
 - Allies
 - Hunt
 
+Entity
+Create static strings for face directions and attacking, etc. match frame names, allow morphing. This allows for the sharing of frames, delaying the need to build specific animations. Good for prototyping or just for flexibility.
+For attack, only need to add static string and frames, START HERE
 
 ---
 room data trigger method - allows mapping of triggers via inheritance/polymorphing
@@ -305,8 +311,7 @@ package dorkbots.dorkbots_iso
 					
 					if (buildHero)
 					{
-						// found hero
-						// makes sure hero is positioned in the center of the screen
+						// found hero, makes sure hero is positioned in the center of the screen
 						placeEntity(_hero, j, i);
 						
 						postionViewPortCornerPoint();
@@ -349,8 +354,7 @@ package dorkbots.dorkbots_iso
 				}
 			}
 			
-			//trace("enemies = " + enemies.length);
-			drawFloor();
+			 drawFloor();
 			drawToCanvas();
 		}
 		
@@ -465,6 +469,8 @@ package dorkbots.dorkbots_iso
 					mat.tx = _borderOffsetX + pos.x;
 					mat.ty = _borderOffsetY + pos.y;
 					
+					// TO DO
+					// node art class. Returns bitmap data instead of using movie clips. Movie clips are still used but instead turned into bitmaps.
 					// tile art with height
 					tileType = roomData.roomTileArtWithHeight[i][j];
 					if (tileType > 0)
@@ -647,7 +653,7 @@ package dorkbots.dorkbots_iso
 		 ********************************************************************************/
 		private function enemyArrivedAtNextPathNode(event:IBroadcastedEvent):void
 		{
-			var enemy:IEnemy = IEnemy(event.owner);
+			var enemy:IEnemy = IEnemy(event.owner());
 			if (enemy.finalDestination)
 			{
 				if(!enemy.finalDestination.equals(_enemyTargetNode)) 

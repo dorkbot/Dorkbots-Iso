@@ -53,9 +53,9 @@ package dorkbots.dorkbots_broadcasters
 		 * 
 		 * @return Returns a String - The last broadcasted event.
 		 */
-		public final function get broadcastedEvent():String
+		public final function broadcastedEvent():String
 		{
-			return broadcasterManager.broadcaster.broadcastedEvent;
+			return broadcasterManager.broadcaster().broadcastedEvent();
 		}
 		
 		/**
@@ -76,7 +76,7 @@ package dorkbots.dorkbots_broadcasters
 					if (!verifyEventName(name)) throw new Error("UKNOWN NAME --> name = " + name + " || This means method verifyEventName is overriden, and the concrete verification of the event 'name' returned false.");
 					break;
 			}
-			broadcasterManager.broadcaster.addEventListener(name, callback);
+			broadcasterManager.broadcaster().addEventListener(name, callback);
 		}
 		
 		/**
@@ -98,7 +98,7 @@ package dorkbots.dorkbots_broadcasters
 		 */
 		public final function removeEventListener(name:String, callback:Function):void
 		{
-			if (broadcasterManager) broadcasterManager.broadcaster.removeEventListener(name, callback);
+			if (broadcasterManager) broadcasterManager.broadcaster().removeEventListener(name, callback);
 		}
 		
 		/**

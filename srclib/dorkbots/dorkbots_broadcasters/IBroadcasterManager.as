@@ -34,7 +34,7 @@ package dorkbots.dorkbots_broadcasters
 	public interface IBroadcasterManager
 	{
 		function broadcastEvent (name:String, object:Object = null):void;
-		function get broadcaster():IBroadcaster;
+		function broadcaster():IBroadcaster;
 		function removeAllListeners():void;
 		function dispose():void;
 	}

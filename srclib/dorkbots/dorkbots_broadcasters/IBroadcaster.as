@@ -38,7 +38,7 @@ package dorkbots.dorkbots_broadcasters
 		 * 
 		 * @return Returns a String - The last broadcasted event.
 		 */
-		function get broadcastedEvent():String;
+		function broadcastedEvent():String;
 			
 		/**
 		 * Attaches callback functions to event strings.
